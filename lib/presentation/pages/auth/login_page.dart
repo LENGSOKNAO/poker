@@ -1,9 +1,10 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:game_poker/core/app_size.dart';
 import 'package:game_poker/data/services/data_manager.dart';
-import 'package:game_poker/test/data.dart';
+import 'package:game_poker/presentation/home/main_menu_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -24,68 +25,75 @@ class _LoginPageState extends State<LoginPage> {
     final username = _user.text.trim();
     final password = _pass.text;
 
+    // check all text field is not empty
     if (username.isEmpty || password.isEmpty) {
       setState(() {
-        _errorMessage = "Please fill all fields";
+        _errorMessage = "Please complete all required fields.";
       });
       return;
     }
 
+    // check email
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$',
+    );
+
+    if (!emailRegex.hasMatch(username)) {
+      setState(() {
+        _errorMessage = "Invalid email address. Please check and try again.";
+      });
+    }
+
+    // if (password != _pass) {
+    //   setState(() {
+    //     _errorMessage = "password is field";
+    //   });
+    // }
+
     setState(() {
-      _errorMessage = '';
+      isLogin = true;
     });
 
     await Future.delayed(const Duration(milliseconds: 500));
 
-    // Find user by username
-    final userByName = testUsers.where((p) => p.name == username).toList();
-    bool success = false;
-
-    if (isLogin) {
-      if (userByName.isEmpty) {
+    try {
+      final success = await _dataManager.login(username, password);
+      // check email and pass is worry
+      if (!success && emailRegex.hasMatch(username)) {
         setState(() {
-          _errorMessage = 'User not found';
+          _errorMessage = "The email or password you entered is invalid.";
         });
-        return;
       }
 
-      // Check if password matches
-      final userByPass = testUsers
-          .where((p) => p.name == username && p.pass == password)
-          .toList();
-
-      if (userByPass.isEmpty) {
-        setState(() {
-          _errorMessage = 'Incorrect password';
-        });
+      if (!mounted) {
         return;
       }
-
-      // Login successful
-      success = _dataManager.login(username, password);
-    } else {
-      // Registration: username must not exist
-      if (userByName.isNotEmpty) {
-        setState(() {
-          _errorMessage = 'Username already exists';
-        });
-        return;
+      // true work
+      if (success) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainMenuPage()),
+        );
       }
-
-      // Register new user
-      success = true;
+    } catch (_) {
+      // false work
+      setState(() {
+        isLogin = false;
+      });
+      setState(() {
+        _errorMessage = 'An error occurred. Please try again.';
+      });
     }
+  }
 
-    if (success) {
-      print('Success!');
-      print('Username: $username');
-      print('Password: $password');
-    }
+  @override
+  void initState() {
+    super.initState();
 
-    // Optionally reset isLogin
-    setState(() {
-      isLogin = false;
-    });
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.portraitUp,
+    ]);
   }
 
   @override
@@ -112,16 +120,18 @@ class _LoginPageState extends State<LoginPage> {
             Positioned(
               left: 0,
               top: 0,
-              child: SizedBox(
-                width: 100,
-                child: Image.asset('assets/logo.png'),
+              child: SafeArea(
+                child: SizedBox(
+                  width: 100,
+                  child: Image.asset('assets/logo.png'),
+                ),
               ),
             ),
             // sign up
             Positioned(
               left: 20,
               right: 0,
-              top: MediaQuery.of(context).size.height * 0.1,
+              top: MediaQuery.of(context).size.height * 0.15,
               child: Text(
                 "Sign in to your Account",
                 style: TextStyle(
@@ -136,7 +146,7 @@ class _LoginPageState extends State<LoginPage> {
             Positioned(
               left: 20,
               right: 0,
-              top: MediaQuery.of(context).size.height * 0.21,
+              top: MediaQuery.of(context).size.height * 0.25,
               child: Row(
                 children: [
                   Text(
@@ -169,50 +179,62 @@ class _LoginPageState extends State<LoginPage> {
               child: Container(
                 width: double.infinity,
                 height: AppSize.heigth(context) * 0.7,
-                decoration: BoxDecoration(color: Colors.white),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
                 child: Padding(
                   padding: EdgeInsets.symmetric(
                     horizontal: AppSize.width(context) * 0.08,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _text(context, 'Email'),
-                      SizedBox(height: 10),
-                      _inputText(context, _user),
-                      SizedBox(height: 40),
-                      _text(context, 'Password'),
-                      SizedBox(height: 10),
-                      _inputPassword(context, _pass),
-                      if (_errorMessage.isNotEmpty)
-                        Padding(
-                          padding: EdgeInsetsGeometry.all(20),
-                          child: Text(
-                            _errorMessage,
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ),
-                      SizedBox(height: 70),
-                      _btn(context, _handleAuth),
-                      SizedBox(height: 40),
-                      _textOrLogin(),
-                      SizedBox(height: 40),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _btnLoginWith('Google', 'assets/google.png'),
-                          ),
-                          SizedBox(width: 20),
-                          Expanded(
-                            child: _btnLoginWith(
-                              'Facebook',
-                              'assets/facebook.png',
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(height: 50),
+                        _text(context, 'Email'),
+                        SizedBox(height: 10),
+                        _inputText(context, _user),
+                        SizedBox(height: 40),
+                        _text(context, 'Password'),
+                        SizedBox(height: 10),
+                        _inputPassword(context, _pass),
+                        if (_errorMessage.isNotEmpty)
+                          Padding(
+                            padding: EdgeInsetsGeometry.all(20),
+                            child: Text(
+                              _errorMessage,
+                              style: TextStyle(color: Colors.red),
                             ),
                           ),
-                        ],
-                      ),
-                    ],
+                        SizedBox(height: 70),
+                        _btn(context, _handleAuth),
+                        SizedBox(height: 40),
+                        _textOrLogin(),
+                        SizedBox(height: 40),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _btnLoginWith(
+                                'Google',
+                                'assets/google.png',
+                              ),
+                            ),
+                            SizedBox(width: 20),
+                            Expanded(
+                              child: _btnLoginWith(
+                                'Facebook',
+                                'assets/facebook.png',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
