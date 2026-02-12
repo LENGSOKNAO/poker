@@ -33,23 +33,6 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    // check email
-    final emailRegex = RegExp(
-      r'^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$',
-    );
-
-    if (!emailRegex.hasMatch(username)) {
-      setState(() {
-        _errorMessage = "Invalid email address. Please check and try again.";
-      });
-    }
-
-    // if (password != _pass) {
-    //   setState(() {
-    //     _errorMessage = "password is field";
-    //   });
-    // }
-
     setState(() {
       isLogin = true;
     });
@@ -59,7 +42,7 @@ class _LoginPageState extends State<LoginPage> {
     try {
       final success = await _dataManager.login(username, password);
       // check email and pass is worry
-      if (!success && emailRegex.hasMatch(username)) {
+      if (!success) {
         setState(() {
           _errorMessage = "The email or password you entered is invalid.";
         });
@@ -196,7 +179,7 @@ class _LoginPageState extends State<LoginPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         SizedBox(height: 50),
-                        _text(context, 'Email'),
+                        _text(context, 'Name'),
                         SizedBox(height: 10),
                         _inputText(context, _user),
                         SizedBox(height: 40),
@@ -213,26 +196,6 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         SizedBox(height: 70),
                         _btn(context, _handleAuth),
-                        SizedBox(height: 40),
-                        _textOrLogin(),
-                        SizedBox(height: 40),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _btnLoginWith(
-                                'Google',
-                                'assets/google.png',
-                              ),
-                            ),
-                            SizedBox(width: 20),
-                            Expanded(
-                              child: _btnLoginWith(
-                                'Facebook',
-                                'assets/facebook.png',
-                              ),
-                            ),
-                          ],
-                        ),
                       ],
                     ),
                   ),
@@ -241,40 +204,6 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _btnLoginWith(String text, String image) {
-    return SizedBox(
-      height: 50,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-        onPressed: () {},
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(image),
-            SizedBox(width: 5),
-            Text(text, style: TextStyle(color: Colors.black, fontSize: 18)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Center _textOrLogin() {
-    return Center(
-      child: Text(
-        "Or login with",
-        style: TextStyle(fontSize: 15, color: Color(0xff6C7278)),
       ),
     );
   }
@@ -310,7 +239,7 @@ class _LoginPageState extends State<LoginPage> {
         color: Colors.black,
       ),
       decoration: InputDecoration(
-        hintText: 'example@gmail.com',
+        hintText: 'Username',
         hintStyle: TextStyle(
           fontSize: AppSize.width(context) * 0.04,
           color: Colors.grey,
