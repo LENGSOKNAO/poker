@@ -56,6 +56,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
             _listTournament(),
 
             SizedBox(height: 20),
+            
             SizedBox(
               height: 500,
               child: FutureBuilder<List<User>>(
