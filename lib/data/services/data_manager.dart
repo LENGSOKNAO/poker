@@ -15,10 +15,10 @@ class DataManager {
     final List<User> allPlayers = [
       User(
         email: 'alice@gmail.com',
-        name: 'Alice Johnson',
-        pass: 'alice123',
+        name: '1',
+        pass: '1',
         profile:
-            'https://imgs.search.brave.com/hXMLHcgARNkPqndOfX3mj_jMk9mdBZ0s-DYFLORdGw8/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudmVjdGVlenku/Y29tL3N5c3RlbS9y/ZXNvdXJjZXMvdGh1/bWJuYWlscy8wMjcv/NjUzLzUwMy9zbWFs/bC9wZXJzb24tdXNp/bmctdGFibGV0LWNv/bXB1dGVyLWFpLWdl/bmVyYXRlZC1waG90/by5qcGc',
+            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500&h=500&fit=crop',
         joinDate: DateTime(2024, 1, 15),
         lastLogin: DateTime(2026, 2, 1),
         balance: 1500.0,
@@ -32,7 +32,7 @@ class DataManager {
         name: 'Bob Smith',
         pass: 'bob123',
         profile:
-            'https://imgs.search.brave.com/7xL7ZQnYQyXQxQxQxQxQ/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudmVjdGVlenku/Y29tL3N5c3RlbS9y/ZXNvdXJjZXMvdGh1/bWJuYWlscy8wMjcv/NjUzLzUwNC9zbWFs/bC9wZXJzb24tdXNp/bmctY29tcHV0ZXItYWktZ2VuZXJhdGVkLXBo/b3RvLmpwZw',
+            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500&h=500&fit=crop',
         joinDate: DateTime(2024, 2, 10),
         lastLogin: DateTime(2026, 2, 2),
         balance: 2500.0,
@@ -46,7 +46,7 @@ class DataManager {
         name: 'Charlie Brown',
         pass: 'charlie123',
         profile:
-            'https://imgs.search.brave.com/8xL8ZQnYQyXQxQxQxQxQ/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudmVjdGVlenku/Y29tL3N5c3RlbS9y/ZXNvdXJjZXMvdGh1/bWJuYWlscy8wMjcv/NjUzLzUwNS9zbWFs/bC93b21hbi11c2lu/Zy1sYXB0b3AtYWkt/Z2VuZXJhdGVkLXBo/b3RvLmpwZw',
+            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=500&fit=crop',
         joinDate: DateTime(2024, 3, 5),
         lastLogin: DateTime(2026, 2, 3),
         balance: 3200.0,
@@ -60,7 +60,7 @@ class DataManager {
         name: 'Diana Prince',
         pass: 'diana123',
         profile:
-            'https://imgs.search.brave.com/9xL9ZQnYQyXQxQxQxQxQ/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudmVjdGVlenku/Y29tL3N5c3RlbS9y/ZXNvdXJjZXMvdGh1/bWJuYWlscy8wMjcv/NjUzLzUwNi9zbWFs/bC93b21hbi13aXRo/LWxhcHRvcC1haS1n/ZW5lcmF0ZWQtcGhv/dG8uanBn',
+            'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=500&h=500&fit=crop',
         joinDate: DateTime(2024, 4, 12),
         lastLogin: DateTime(2026, 2, 4),
         balance: 1800.0,
@@ -74,7 +74,7 @@ class DataManager {
         name: 'Eve Adams',
         pass: 'eve123',
         profile:
-            'https://imgs.search.brave.com/10x10QnYQyXQxQxQxQxQ/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudmVjdGVlenku/Y29tL3N5c3RlbS9y/ZXNvdXJjZXMvdGh1/bWJuYWlscy8wMjcv/NjUzLzUwNy9zbWFs/bC95b3VuZy13b21h/bi13aXRoLWxhcHRv/cC1haS1nZW5lcmF0/ZWQtcGhvdG8uanBn',
+            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&h=500&fit=crop',
         joinDate: DateTime(2024, 5, 20),
         lastLogin: DateTime(2026, 2, 5),
         balance: 2100.0,
@@ -88,7 +88,7 @@ class DataManager {
         name: 'Frank Castle',
         pass: 'frank123',
         profile:
-            'https://imgs.search.brave.com/11x11QnYQyXQxQxQxQxQ/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudmVjdGVlenku/Y29tL3N5c3RlbS9y/ZXNvdXJjZXMvdGh1/bWJuYWlscy8wMjcv/NjUzLzUwOC9zbWFs/bC9tYW4td2l0aC1s/YXB0b3AtYWktZ2Vu/ZXJhdGVkLXBob3Rv/LmpwZw',
+            'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=500&h=500&fit=crop',
         joinDate: DateTime(2024, 6, 15),
         lastLogin: DateTime(2026, 2, 6),
         balance: 4300.0,
@@ -102,7 +102,7 @@ class DataManager {
         name: 'Grace Hopper',
         pass: 'grace123',
         profile:
-            'https://imgs.search.brave.com/12x12QnYQyXQxQxQxQxQ/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudmVjdGVlenku/Y29tL3N5c3RlbS9y/ZXNvdXJjZXMvdGh1/bWJuYWlscy8wMjcv/NjUzLzUwOS9zbWFs/bC93b21hbi1pbi1i/dXNpbmVzcy1haS1n/ZW5lcmF0ZWQtcGhv/dG8uanBn',
+            'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=500&h=500&fit=crop',
         joinDate: DateTime(2024, 7, 8),
         lastLogin: DateTime(2026, 2, 7),
         balance: 3700.0,
@@ -116,7 +116,7 @@ class DataManager {
         name: 'Henry Cavill',
         pass: 'henry123',
         profile:
-            'https://imgs.search.brave.com/13x13QnYQyXQxQxQxQxQ/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudmVjdGVlenku/Y29tL3N5c3RlbS9y/ZXNvdXJjZXMvdGh1/bWJuYWlscy8wMjcv/NjUzLzUxMC9zbWFs/bC9tYW4taW4tc3Vp/dC1haS1nZW5lcmF0/ZWQtcGhvdG8uanBn',
+            'https://imgs.search.brave.com/KL3_OExvuF9hugpWhbBPf5fDEvQSxrL7A5gLIXa_b-w/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pMC53/cC5jb20vcGljanVt/Ym8uY29tL3dwLWNv/bnRlbnQvdXBsb2Fk/cy9taW5pbWFsaXN0/LXBvcnRyYWl0LW9m/LWEtd29tYW4td2l0/aC1nbG93aW5nLWxp/Z2h0LWJlaGluZC1o/ZXItZnJlZS1pbWFn/ZS5qcGVnP3c9NjAw/JnF1YWxpdHk9ODA',
         joinDate: DateTime(2024, 8, 19),
         lastLogin: DateTime(2026, 2, 8),
         balance: 5200.0,
@@ -130,7 +130,7 @@ class DataManager {
         name: 'Isabella Martinez',
         pass: 'isabella123',
         profile:
-            'https://imgs.search.brave.com/14x14QnYQyXQxQxQxQxQ/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudmVjdGVlenku/Y29tL3N5c3RlbS9y/ZXNvdXJjZXMvdGh1/bWJuYWlscy8wMjcv/NjUzLzUxMS9zbWFs/bC93b21hbi1zbWls/aW5nLWFpLWdlbmVy/YXRlZC1waG90by5q/cGc',
+            'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500&h=500&fit=crop',
         joinDate: DateTime(2024, 9, 3),
         lastLogin: DateTime(2026, 2, 9),
         balance: 2800.0,
@@ -144,7 +144,7 @@ class DataManager {
         name: 'Jack Reacher',
         pass: 'jack123',
         profile:
-            'https://imgs.search.brave.com/15x15QnYQyXQxQxQxQxQ/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudmVjdGVlenku/Y29tL3N5c3RlbS9y/ZXNvdXJjZXMvdGh1/bWJuYWlscy8wMjcv/NjUzLzUxMi9zbWFs/bC9tYW4taW4tamFj/a2V0LWFpLWdlbmVy/YXRlZC1waG90by5q/cGc',
+            'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=500&h=500&fit=crop',
         joinDate: DateTime(2024, 10, 25),
         lastLogin: DateTime(2026, 2, 10),
         balance: 3900.0,
@@ -156,7 +156,7 @@ class DataManager {
     ];
 
     for (var n in allPlayers) {
-      _users[n.email] = n;
+      _users[n.name] = n;
     }
     _currentUser = allPlayers.first;
   }
@@ -167,6 +167,7 @@ class DataManager {
     final userJson = json.encode(
       _users.map((key, value) => MapEntry(key, value.toJson())),
     );
+    await prefs.setString(_userKey, userJson);
   }
 
   Future<bool> login(String username, String password) async {
@@ -185,4 +186,12 @@ class DataManager {
   }
 
   User? get currentUser => _currentUser;
+
+  Future<void> updateUser(User user) async {
+    _users[user.name] = user;
+    if (_currentUser?.name == user.name) {
+      _currentUser = user;
+    }
+    await _saveUser();
+  }
 }
