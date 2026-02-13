@@ -31,10 +31,24 @@ class Realistplaycard extends StatefulWidget {
 class _RealistplaycardState extends State<Realistplaycard>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+  bool _hasError = false;
 
   @override
   void initState() {
     super.initState();
+
+    // Debug: Print card info
+    if (widget.card != null) {
+      print('🎴 Building card: ${widget.card.toString()}');
+      print('📱 Using network: ${widget.useNetworkImage}');
+      if (widget.useNetworkImage) {
+        print('🔗 Image URL: ${widget.card.imageUrl}');
+      } else {
+        print('📁 Local path: ${widget.card.imagePath}');
+      }
+    } else {
+      print('❌ ERROR: Card is null!');
+    }
 
     _controller = AnimationController(
       duration: const Duration(milliseconds: 800),
@@ -60,6 +74,39 @@ class _RealistplaycardState extends State<Realistplaycard>
 
   @override
   Widget build(BuildContext context) {
+    // Check if card is null
+    if (widget.card == null) {
+      return Container(
+        width: widget.width,
+        height: widget.height,
+        decoration: BoxDecoration(
+          color: Colors.red.shade100,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.red, width: 2),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: Colors.red,
+                size: widget.width * 0.3,
+              ),
+              Text(
+                'No Card',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: widget.width * 0.15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return ScaleTransition(
       scale: Tween<double>(begin: 0.5, end: 1.0).animate(
         CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
@@ -89,7 +136,10 @@ class _RealistplaycardState extends State<Realistplaycard>
           width: widget.width,
           height: widget.height,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => _buildDefaultCardBack(),
+          errorBuilder: (context, error, stackTrace) {
+            print('❌ Error loading card back: $error');
+            return _buildDefaultCardBack();
+          },
         ),
       ),
     );
@@ -103,16 +153,31 @@ class _RealistplaycardState extends State<Realistplaycard>
         color: Colors.blueGrey[900],
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white70, width: 2),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.blueGrey[800]!,
+            Colors.blueGrey[900]!,
+            Colors.blueGrey[700]!,
+          ],
+        ),
       ),
       child: Center(
-        child: Text(
-          'BACK',
-          style: TextStyle(
-            fontSize: widget.width * 0.25,
-            fontWeight: FontWeight.bold,
-            color: Colors.white70,
-            letterSpacing: 1.5,
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.style, color: Colors.white70, size: widget.width * 0.3),
+            Text(
+              'BACK',
+              style: TextStyle(
+                fontSize: widget.width * 0.2,
+                fontWeight: FontWeight.bold,
+                color: Colors.white70,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -134,7 +199,11 @@ class _RealistplaycardState extends State<Realistplaycard>
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: widget.useNetworkImage ? _buildNetworkCard() : _buildAssetCard(),
+        child: _hasError
+            ? _buildFallbackCard()
+            : (widget.useNetworkImage
+                  ? _buildNetworkCard()
+                  : _buildAssetCard()),
       ),
     );
   }
@@ -146,21 +215,31 @@ class _RealistplaycardState extends State<Realistplaycard>
       height: widget.height,
       fit: BoxFit.cover,
       placeholder: (context, url) => Container(
-        color: Colors.white,
-        alignment: Alignment.center,
-        child: SizedBox(
-          width: widget.width * 0.4,
-          height: widget.width * 0.4,
-          child: CircularProgressIndicator(
-            strokeWidth: 4,
-            valueColor: AlwaysStoppedAnimation<Color>(widget.card.color),
+        color: Colors.grey[200],
+        child: Center(
+          child: SizedBox(
+            width: 30,
+            height: 30,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                widget.card?.color ?? Colors.blue,
+              ),
+            ),
           ),
         ),
       ),
-      errorWidget: (context, url, error) => _buildFallbackCard(),
+      errorWidget: (context, url, error) {
+        print('❌ Error loading network image: $error');
+        print('🔗 Failed URL: $url');
+        setState(() {
+          _hasError = true;
+        });
+        return _buildFallbackCard();
+      },
       fadeInDuration: const Duration(milliseconds: 400),
       fadeOutDuration: const Duration(milliseconds: 200),
-      memCacheWidth: (widget.width * 2).toInt(), // better quality on high-res
+      memCacheWidth: (widget.width * 2).toInt(),
     );
   }
 
@@ -170,12 +249,23 @@ class _RealistplaycardState extends State<Realistplaycard>
       width: widget.width,
       height: widget.height,
       fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) => _buildFallbackCard(),
+      errorBuilder: (context, error, stackTrace) {
+        print('❌ Error loading asset: ${widget.card.imagePath}');
+        print('📁 Error details: $error');
+        setState(() {
+          _hasError = true;
+        });
+        return _buildFallbackCard();
+      },
     );
   }
 
   Widget _buildFallbackCard() {
-    final color = widget.card.color;
+    final color = widget.card?.color ?? Colors.black;
+    final rankText = widget.card?.rankText ?? '?';
+    final suitSymbol = widget.card?.suitSymbol ?? '?';
+    final isFaceCard = widget.card?.isFaceCard ?? false;
+    final faceCardSymbol = widget.card?.faceCardSymbol ?? '?';
 
     return Container(
       width: widget.width,
@@ -184,6 +274,13 @@ class _RealistplaycardState extends State<Realistplaycard>
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color.withOpacity(0.4), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 5,
+            offset: const Offset(2, 2),
+          ),
+        ],
       ),
       child: Stack(
         children: [
@@ -195,7 +292,7 @@ class _RealistplaycardState extends State<Realistplaycard>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.card.rankText,
+                  rankText,
                   style: TextStyle(
                     fontSize: widget.width * 0.20,
                     fontWeight: FontWeight.bold,
@@ -204,7 +301,7 @@ class _RealistplaycardState extends State<Realistplaycard>
                   ),
                 ),
                 Text(
-                  widget.card.suitSymbol,
+                  suitSymbol,
                   style: TextStyle(fontSize: widget.width * 0.16, color: color),
                 ),
               ],
@@ -215,12 +312,12 @@ class _RealistplaycardState extends State<Realistplaycard>
             bottom: 8,
             right: 8,
             child: Transform.rotate(
-              angle: 3.1415926535, // pi radians
+              angle: 3.1415926535, // 180 degrees
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.card.rankText,
+                    rankText,
                     style: TextStyle(
                       fontSize: widget.width * 0.20,
                       fontWeight: FontWeight.bold,
@@ -229,7 +326,7 @@ class _RealistplaycardState extends State<Realistplaycard>
                     ),
                   ),
                   Text(
-                    widget.card.suitSymbol,
+                    suitSymbol,
                     style: TextStyle(
                       fontSize: widget.width * 0.16,
                       color: color,
@@ -242,9 +339,7 @@ class _RealistplaycardState extends State<Realistplaycard>
           // Center symbol
           Center(
             child: Text(
-              widget.card.isFaceCard
-                  ? widget.card.faceCardSymbol
-                  : widget.card.suitSymbol,
+              isFaceCard ? faceCardSymbol : suitSymbol,
               style: TextStyle(
                 fontSize: widget.width * 0.45,
                 fontWeight: FontWeight.bold,
@@ -252,6 +347,24 @@ class _RealistplaycardState extends State<Realistplaycard>
               ),
             ),
           ),
+          // Small indicator that this is fallback
+          if (_hasError)
+            Positioned(
+              top: 2,
+              right: 2,
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.error_outline,
+                  color: Colors.white,
+                  size: 12,
+                ),
+              ),
+            ),
         ],
       ),
     );
