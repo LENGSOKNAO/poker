@@ -632,18 +632,18 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
               !_game!.players[_game!.currentPlayerIndex].isAllIn)
             MiniiActionPanel(
               onActionSelected: (action, raiseAmount) {
-                if (action == GameAction.raise && raiseAmount != null) {
-                  _makeAction(action, raiseAmount: raiseAmount);
-                } else {
-                  _makeAction(action);
-                }
+                _makeAction(action, raiseAmount: raiseAmount);
               },
-              crrentBet: _game!.currentBet,
+              currentBet: _game!.currentBet,
               playerCurrentBet: _humanPlayer!.currentBet,
-              isCheck: _humanPlayer!.isCheck(_game!.currentBet),
-              isCall: _humanPlayer!.isCall(_game!.currentBet),
-              isRaise: _humanPlayer!.chips > 0,
-              onAutonFold: () => _makeAction(GameAction.fold),
+              isCheckAvailable: _humanPlayer!.isCheck(_game!.currentBet),
+              isCallAvailable: _humanPlayer!.isCall(_game!.currentBet),
+              isRaiseAvailable: _humanPlayer!.chips > 0,
+              autoFoldDuration: const Duration(seconds: 15),
+              onAutoFold: () {
+                _makeAction(GameAction.fold);
+              },
+              playerChips: _humanPlayer!.chips,
             ),
         ],
       ),
@@ -739,6 +739,7 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
               if (cards.isNotEmpty)
                 Realistplaycard(
                   card: cards[0],
+                  useNetworkImage: false,
                   isHidden:
                       isOpponent &&
                       !(_game?.players[1].isAllIn ?? false) &&
@@ -752,6 +753,7 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
               if (cards.length > 1)
                 Realistplaycard(
                   card: cards[1],
+                  useNetworkImage: false,
                   isHidden:
                       isOpponent &&
                       !(_game?.currentRound == BettingRound.showdown) &&

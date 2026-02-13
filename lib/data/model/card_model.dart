@@ -75,18 +75,90 @@ class CardModel {
     }
   }
 
-  // Get image path for the card
+  // ========================================
+  // ALL 52 CARD NETWORK LINKS STORED HERE
+  // ========================================
+  static const Map<String, String> _cardImageUrls = {
+    // Spades ♠
+    'AS': 'https://deckofcardsapi.com/static/img/AS.svg',
+    '2S': 'https://deckofcardsapi.com/static/img/2S.svg',
+    '3S': 'https://deckofcardsapi.com/static/img/3S.svg',
+    '4S': 'https://deckofcardsapi.com/static/img/4S.svg',
+    '5S': 'https://deckofcardsapi.com/static/img/5S.svg',
+    '6S': 'https://deckofcardsapi.com/static/img/6S.svg',
+    '7S': 'https://deckofcardsapi.com/static/img/7S.svg',
+    '8S': 'https://deckofcardsapi.com/static/img/8S.svg',
+    '9S': 'https://deckofcardsapi.com/static/img/9S.svg',
+    '0S': 'https://deckofcardsapi.com/static/img/0S.svg', // 10 of Spades
+    'JS': 'https://deckofcardsapi.com/static/img/JS.svg',
+    'QS': 'https://deckofcardsapi.com/static/img/QS.svg',
+    'KS': 'https://deckofcardsapi.com/static/img/KS.svg',
+
+    // Hearts ♥
+    'AH': 'https://deckofcardsapi.com/static/img/AH.svg',
+    '2H': 'https://deckofcardsapi.com/static/img/2H.svg',
+    '3H': 'https://deckofcardsapi.com/static/img/3H.svg',
+    '4H': 'https://deckofcardsapi.com/static/img/4H.svg',
+    '5H': 'https://deckofcardsapi.com/static/img/5H.svg',
+    '6H': 'https://deckofcardsapi.com/static/img/6H.svg',
+    '7H': 'https://deckofcardsapi.com/static/img/7H.svg',
+    '8H': 'https://deckofcardsapi.com/static/img/8H.svg',
+    '9H': 'https://deckofcardsapi.com/static/img/9H.svg',
+    '0H': 'https://deckofcardsapi.com/static/img/0H.svg',
+    'JH': 'https://deckofcardsapi.com/static/img/JH.svg',
+    'QH': 'https://deckofcardsapi.com/static/img/QH.svg',
+    'KH': 'https://deckofcardsapi.com/static/img/KH.svg',
+
+    // Diamonds ♦
+    'AD': 'https://deckofcardsapi.com/static/img/AD.svg',
+    '2D': 'https://deckofcardsapi.com/static/img/2D.svg',
+    '3D': 'https://deckofcardsapi.com/static/img/3D.svg',
+    '4D': 'https://deckofcardsapi.com/static/img/4D.svg',
+    '5D': 'https://deckofcardsapi.com/static/img/5D.svg',
+    '6D': 'https://deckofcardsapi.com/static/img/6D.svg',
+    '7D': 'https://deckofcardsapi.com/static/img/7D.svg',
+    '8D': 'https://deckofcardsapi.com/static/img/8D.svg',
+    '9D': 'https://deckofcardsapi.com/static/img/9D.svg',
+    '0D': 'https://deckofcardsapi.com/static/img/0D.svg',
+    'JD': 'https://deckofcardsapi.com/static/img/JD.svg',
+    'QD': 'https://deckofcardsapi.com/static/img/QD.svg',
+    'KD': 'https://deckofcardsapi.com/static/img/KD.svg',
+
+    // Clubs ♣
+    'AC': 'https://deckofcardsapi.com/static/img/AC.svg',
+    '2C': 'https://deckofcardsapi.com/static/img/2C.svg',
+    '3C': 'https://deckofcardsapi.com/static/img/3C.svg',
+    '4C': 'https://deckofcardsapi.com/static/img/4C.svg',
+    '5C': 'https://deckofcardsapi.com/static/img/5C.svg',
+    '6C': 'https://deckofcardsapi.com/static/img/6C.svg',
+    '7C': 'https://deckofcardsapi.com/static/img/7C.svg',
+    '8C': 'https://deckofcardsapi.com/static/img/8C.svg',
+    '9C': 'https://deckofcardsapi.com/static/img/9C.svg',
+    '0C': 'https://deckofcardsapi.com/static/img/0C.svg',
+    'JC': 'https://deckofcardsapi.com/static/img/JC.svg',
+    'QC': 'https://deckofcardsapi.com/static/img/QC.svg',
+    'KC': 'https://deckofcardsapi.com/static/img/KC.svg',
+  };
+
+  static const String backImageUrl =
+      'https://deckofcardsapi.com/static/img/back.png';
+
+  // Get network image URL using the stored map (fast lookup)
+  String get imageUrl {
+    final rankCode = _getUrlRankCode();
+    final suitCode = _getUrlSuitCode();
+    final key = '$rankCode$suitCode';
+
+    // Use stored link if exists, fallback to dynamic construction
+    return _cardImageUrls[key] ??
+        'https://deckofcardsapi.com/static/img/$key.svg';
+  }
+
+  // Get image path for local assets (unchanged)
   String get imagePath {
     final rankCode = _getRankCode();
     final suitCode = _getSuitCode();
     return 'assets/cards/${rankCode}_of_$suitCode.png';
-  }
-
-  // Get network image URL for the card
-  String get imageUrl {
-    final rankCode = _getUrlRankCode();
-    final suitCode = _getUrlSuitCode();
-    return 'https://deckofcardsapi.com/static/img/$rankCode$suitCode.png';
   }
 
   String _getRankCode() {

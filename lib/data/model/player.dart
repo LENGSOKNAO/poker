@@ -1,4 +1,5 @@
 import 'package:game_poker/data/model/card_model.dart';
+import 'package:game_poker/data/model/poker_hand.dart';
 
 class Player {
   String name;
@@ -97,5 +98,10 @@ class Player {
 
   void winPot(double amount) {
     chips += amount;
+  }
+
+  PokerHand getBestHand(List<CardModel> communityCards) {
+    final allCards = [...cards, ...communityCards];
+    return PokerHand(allCards);
   }
 }
