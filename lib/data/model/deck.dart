@@ -1,6 +1,8 @@
 import 'dart:math';
+
 import 'package:game_poker/core/enums/game.enums.dart';
-import 'package:game_poker/data/model/card_model.dart';
+
+import 'card_model.dart';
 
 class Deck {
   List<CardModel> cards = [];
@@ -11,7 +13,6 @@ class Deck {
 
   void _initializeDeck() {
     cards.clear();
-
     for (var suit in Suit.values) {
       for (var rank in Rank.values) {
         cards.add(CardModel(suit, rank));
@@ -31,17 +32,16 @@ class Deck {
     return cards.removeLast();
   }
 
-  List<CardModel> drawMutiple(int count) {
-    List<CardModel> draw = [];
-
+  List<CardModel> drawMultiple(int count) {
+    List<CardModel> drawn = [];
     for (int i = 0; i < count; i++) {
       if (cards.isEmpty) {
         _initializeDeck();
         shuffle();
       }
-      draw.add(cards.removeLast());
+      drawn.add(cards.removeLast());
     }
-    return draw;
+    return drawn;
   }
 
   void reset() {

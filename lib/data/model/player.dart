@@ -1,17 +1,17 @@
-import 'package:game_poker/data/model/card_model.dart';
-import 'package:game_poker/data/model/poker_hand.dart';
+import 'card_model.dart';
+import 'poker_hand.dart';
 
 class Player {
   String name;
   List<CardModel> cards = [];
   double chips;
-  bool isAI;
   double currentBet = 0;
   bool isFolded = false;
   bool isAllIn = false;
+  bool isActive = true;
+  bool isAI;
   String lastAction = '';
   double totalBetThisRound = 0;
-  bool isActive = true;
 
   Player({required this.name, required this.chips, this.isAI = false});
 
@@ -25,21 +25,24 @@ class Player {
     lastAction = '';
   }
 
-  bool isCheck(double currentBetToMatch) {
+  void resetRound() {
+    currentBet = 0;
+    totalBetThisRound = 0;
+  }
+
+  bool canCheck(double currentBetToMatch) {
     return currentBet >= currentBetToMatch && chips > 0;
   }
 
-  bool isCall(double currentBetToMatch) {
-    return currentBet >= (currentBetToMatch - currentBet) && chips > 0;
+  bool canCall(double currentBetToMatch) {
+    return chips >= (currentBetToMatch - currentBet) && chips > 0;
   }
 
-  bool isRaise(double raiseAmount, double currnetBetMatch) {
+  bool canRaise(double raiseAmount, double currentBetToMatch) {
     if (chips <= 0) return false;
-
     double totalNeeded = (raiseAmount - currentBet);
-
-    if (totalNeeded < (currnetBetMatch - currentBet)) {
-      totalNeeded = (currnetBetMatch - currentBet) * 2;
+    if (totalNeeded < (currentBetToMatch - currentBet)) {
+      totalNeeded = (currentBetToMatch - currentBet) * 2;
     }
     return chips >= totalNeeded;
   }
@@ -87,13 +90,14 @@ class Player {
   }
 
   void allIn() {
-    if (chips <= 0) {
-      double allAmount = chips;
-      currentBet += allAmount;
-      chips = 0;
-      isAllIn = true;
-      lastAction = 'All In \$${allAmount.toStringAsFixed(0)}';
-    }
+    if (chips <= 0) return;
+
+    double allInAmount = chips;
+    currentBet += allInAmount;
+    totalBetThisRound += allInAmount;
+    chips = 0;
+    isAllIn = true;
+    lastAction = 'All-In \$${allInAmount.toStringAsFixed(0)}';
   }
 
   void winPot(double amount) {

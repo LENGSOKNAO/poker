@@ -1,7 +1,7 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:game_poker/core/enums/game.enums.dart';
+import 'package:game_poker/widget/dialog/action_selection_dialog.dart';
 
 class MiniiActionPanel extends StatefulWidget {
   final double currentBet;
@@ -33,69 +33,89 @@ class MiniiActionPanel extends StatefulWidget {
 
 class _MiniiActionPanelState extends State<MiniiActionPanel>
     with SingleTickerProviderStateMixin {
-  late Timer _timer;
-  late AnimationController _pulse;
-  int _secLeft = 12;
-  bool _urgent = false;
+  late Timer _autoFoldTimer;
+  int _secondsRemaining = 0;
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+  bool _isDisposed = false;
 
   @override
   void initState() {
     super.initState();
-    _secLeft = widget.autoFoldDuration.inSeconds;
-    _startTimer();
+    _secondsRemaining = widget.autoFoldDuration.inSeconds;
+    _startAutoFoldTimer();
 
-    _pulse = AnimationController(
+    _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 500),
     )..repeat(reverse: true);
+
+    _pulseAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
   }
 
-  void _startTimer() {
-    _secLeft = widget.autoFoldDuration.inSeconds;
-    _urgent = false;
-    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
+  void _startAutoFoldTimer() {
+    _autoFoldTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted || _isDisposed) {
+        timer.cancel();
+        return;
+      }
+
       setState(() {
-        _secLeft--;
-        if (_secLeft <= 4) _urgent = true;
+        _secondsRemaining--;
       });
-      if (_secLeft <= 0) {
-        t.cancel();
-        _pulse.stop();
-        widget.onAutoFold();
+
+      if (_secondsRemaining <= 0) {
+        timer.cancel();
+        if (mounted && !_isDisposed) {
+          widget.onAutoFold();
+        }
       }
     });
   }
 
+  void _resetTimer() {
+    if (_autoFoldTimer.isActive) {
+      _autoFoldTimer.cancel();
+    }
+    setState(() {
+      _secondsRemaining = widget.autoFoldDuration.inSeconds;
+    });
+    _startAutoFoldTimer();
+  }
+
   @override
   void dispose() {
-    _timer.cancel();
-    _pulse.dispose();
+    _isDisposed = true;
+    _autoFoldTimer.cancel();
+    _pulseController.dispose();
     super.dispose();
   }
 
-  void _perform(GameAction action, [double? raiseTo]) {
-    _timer.cancel();
-    _pulse.stop();
-    widget.onActionSelected(action, raiseTo);
+  void _selectAction(GameAction action, [double? raiseAmount]) {
+    if (_autoFoldTimer.isActive) {
+      _autoFoldTimer.cancel();
+    }
+    widget.onActionSelected(action, raiseAmount);
   }
+
+  bool get _isUrgent => _secondsRemaining <= 3;
 
   @override
   Widget build(BuildContext context) {
-    final progress =
-        _secLeft / widget.autoFoldDuration.inSeconds.clamp(1, double.infinity);
-
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.2), // deeper, cleaner dark
+          color: Colors.black.withOpacity(0.2),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Timer – cleaner, more legible
+            // Timer
             SizedBox(
               width: 48,
               height: 48,
@@ -103,26 +123,29 @@ class _MiniiActionPanelState extends State<MiniiActionPanel>
                 alignment: Alignment.center,
                 children: [
                   CircularProgressIndicator(
-                    value: progress,
+                    value:
+                        _secondsRemaining / widget.autoFoldDuration.inSeconds,
                     strokeWidth: 4,
-                    valueColor: AlwaysStoppedAnimation(
-                      _urgent
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      _isUrgent
                           ? const Color(0xFFFF5555)
                           : const Color(0xFF2DD4BF),
                     ),
                   ),
                   AnimatedBuilder(
-                    animation: _pulse,
-                    builder: (_, __) {
-                      final scale = _urgent ? 1.0 + _pulse.value * 0.1 : 1.0;
+                    animation: _pulseAnimation,
+                    builder: (_, child) {
+                      final scale = _isUrgent
+                          ? 1.0 + _pulseAnimation.value * 0.1
+                          : 1.0;
                       return Transform.scale(
                         scale: scale,
                         child: Text(
-                          '$_secLeft',
+                          '$_secondsRemaining',
                           style: TextStyle(
                             fontSize: 19,
                             fontWeight: FontWeight.w700,
-                            color: _urgent
+                            color: _isUrgent
                                 ? const Color(0xFFFF7777)
                                 : const Color(0xFF5EEAD4),
                             height: 1,
@@ -136,36 +159,36 @@ class _MiniiActionPanelState extends State<MiniiActionPanel>
             ),
             const SizedBox(height: 14),
 
-            // Buttons – cleaner spacing, flatter, more readable
+            // Buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _smallButton(
-                  'FOLD',
-                  Colors.red.shade900,
-                  () => _perform(GameAction.fold),
-                  true,
+                _buildActionButton(
+                  label: 'FOLD',
+                  color: Colors.red.shade900,
+                  onTap: () => _selectAction(GameAction.fold),
+                  enabled: true,
                 ),
-                _smallButton(
-                  'CHECK',
-                  Colors.grey.shade800,
-                  () => _perform(GameAction.check),
-                  widget.isCheckAvailable,
+                _buildActionButton(
+                  label: 'CHECK',
+                  color: Colors.grey.shade800,
+                  onTap: () => _selectAction(GameAction.check),
+                  enabled: widget.isCheckAvailable,
                 ),
-                _smallButton(
-                  'CALL',
-                  Colors.blue.shade900,
-                  () => _perform(GameAction.call),
-                  widget.isCallAvailable,
+                _buildActionButton(
+                  label: 'CALL',
+                  color: Colors.blue.shade900,
+                  onTap: () => _selectAction(GameAction.call),
+                  enabled: widget.isCallAvailable,
                   extra: widget.currentBet > widget.playerCurrentBet
                       ? '${(widget.currentBet - widget.playerCurrentBet).toInt()}'
                       : null,
                 ),
-                _smallButton(
-                  'RAISE',
-                  Colors.green.shade900,
-                  () => _perform(GameAction.raise),
-                  widget.isRaiseAvailable,
+                _buildActionButton(
+                  label: 'RAISE',
+                  color: Colors.green.shade900,
+                  onTap: () => _showRaiseDialog(),
+                  enabled: widget.isRaiseAvailable,
                   accent: true,
                 ),
               ],
@@ -176,63 +199,78 @@ class _MiniiActionPanelState extends State<MiniiActionPanel>
     );
   }
 
-  Widget _smallButton(
-    String label,
-    Color color,
-    VoidCallback? onTap,
-    bool enabled, {
+  Widget _buildActionButton({
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+    required bool enabled,
     String? extra,
     bool accent = false,
   }) {
-    final canPress = enabled && onTap != null;
-
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Opacity(
-          opacity: canPress ? 1.0 : 0.4,
-          child: ElevatedButton(
-            onPressed: canPress ? onTap : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: color,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: Colors.grey.shade900,
+        child: Material(
+          borderRadius: BorderRadius.circular(16),
+          color: enabled ? color : Colors.grey.shade800,
+          child: InkWell(
+            onTap: enabled
+                ? () {
+                    _resetTimer();
+                    onTap();
+                  }
+                : null,
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              minimumSize: const Size(0, 46),
-              shape: RoundedRectangleBorder(
+              decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                side: accent
-                    ? BorderSide(color: Colors.white.withOpacity(0.2), width: 1)
-                    : BorderSide.none,
+                border: accent
+                    ? Border.all(color: Colors.white.withOpacity(0.2), width: 1)
+                    : null,
               ),
-              elevation: accent ? 2 : 0,
-              shadowColor: accent ? Colors.white.withOpacity(0.1) : null,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: accent ? 15 : 14,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-                if (extra != null)
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   Text(
-                    extra,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white70,
+                    label,
+                    style: TextStyle(
+                      fontSize: accent ? 15 : 14,
+                      fontWeight: FontWeight.w800,
+                      color: enabled ? Colors.white : Colors.white54,
+                      letterSpacing: 0.3,
                     ),
                   ),
-              ],
+                  if (extra != null && enabled)
+                    Text(
+                      extra,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white70,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _showRaiseDialog() {
+    _resetTimer();
+    showDialog(
+      context: context,
+      builder: (context) => ActionSelectionDialog(
+        onActionSelected: _selectAction,
+        currentBet: widget.currentBet,
+        playerCurrentBet: widget.playerCurrentBet,
+        playerChips: widget.playerChips,
+        canCheck: widget.isCheckAvailable,
+        canCall: widget.isCallAvailable,
+        canRaise: widget.isRaiseAvailable,
       ),
     );
   }
