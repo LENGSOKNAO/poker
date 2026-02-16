@@ -104,36 +104,56 @@ class PokerGame {
   }
 
   void nextRound() {
+    // Reset the number of actions taken in this betting round
     actionsThisRound = 0;
 
+    // Advance the game to the next round
     switch (currentRound) {
       case BettingRound.preflop:
+        // Move from preflop to flop
         currentRound = BettingRound.flop;
+        // Draw 3 community cards and put them on the table
         communityCards = deck.drawMultiple(3);
         break;
+
       case BettingRound.flop:
+        // Move from flop to turn
         currentRound = BettingRound.turn;
+        // Draw 1 more community card (the turn)
         communityCards.add(deck.drawCard());
         break;
+
       case BettingRound.turn:
+        // Move from turn to river
         currentRound = BettingRound.river;
+        // Draw 1 more community card (the river)
         communityCards.add(deck.drawCard());
         break;
+
       case BettingRound.river:
+        // Move from river to showdown
         currentRound = BettingRound.showdown;
+        // Determine the winner of the hand based on players' hands + community cards
         determineWinner();
         break;
+
       case BettingRound.showdown:
+        // If already at showdown, the game is over
         isGameOver = true;
         break;
     }
 
+    // Reset each player's state for the new betting round
     for (var player in players) {
       player.resetRound();
     }
+
+    // Reset the current bet to 0 for the new round
     currentBet = 0;
 
+    // Set the next player to act starting from the small blind
     currentPlayerIndex = smallBlindIndex;
+    // Skip any inactive/folded players to find the next active player
     moveToNextActivePlayer();
   }
 

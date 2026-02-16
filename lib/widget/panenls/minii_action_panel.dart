@@ -108,8 +108,8 @@ class _MiniiActionPanelState extends State<MiniiActionPanel>
       padding: const EdgeInsets.all(8.0),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.2),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          color: Colors.black.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(20),
         ),
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         child: Column(
@@ -132,32 +132,9 @@ class _MiniiActionPanelState extends State<MiniiActionPanel>
                           : const Color(0xFF2DD4BF),
                     ),
                   ),
-                  AnimatedBuilder(
-                    animation: _pulseAnimation,
-                    builder: (_, child) {
-                      final scale = _isUrgent
-                          ? 1.0 + _pulseAnimation.value * 0.1
-                          : 1.0;
-                      return Transform.scale(
-                        scale: scale,
-                        child: Text(
-                          '$_secondsRemaining',
-                          style: TextStyle(
-                            fontSize: 19,
-                            fontWeight: FontWeight.w700,
-                            color: _isUrgent
-                                ? const Color(0xFFFF7777)
-                                : const Color(0xFF5EEAD4),
-                            height: 1,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 14),
 
             // Buttons
             Row(
@@ -229,8 +206,8 @@ class _MiniiActionPanelState extends State<MiniiActionPanel>
                     ? Border.all(color: Colors.white.withOpacity(0.2), width: 1)
                     : null,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     label,
@@ -241,9 +218,10 @@ class _MiniiActionPanelState extends State<MiniiActionPanel>
                       letterSpacing: 0.3,
                     ),
                   ),
+                  SizedBox(width: 5),
                   if (extra != null && enabled)
                     Text(
-                      extra,
+                      '(\$$extra)',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

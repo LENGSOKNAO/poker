@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:game_poker/core/enums/game.enums.dart';
 import 'package:game_poker/data/game/poker_game.dart';
 import 'package:game_poker/data/model/card_model.dart';
@@ -26,7 +28,12 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
   @override
   void initState() {
     super.initState();
-    _betController.text = '1000';
+    _betController.text = '500';
+
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
   }
 
   @override
@@ -49,18 +56,18 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
       return;
     }
 
-    if (bet > user.balance) {
-      _showError(
-        'Insufficient balance!\nYour balance: \$${user.balance.toStringAsFixed(0)}\nBet amount: \$${bet.toStringAsFixed(0)}',
-      );
+    if (bet < 500) {
+      _showError('Insufficient balance! You need 500 to play.');
       return;
     }
 
-    // Only deduct bet on first game
-    user.balance -= bet;
+    final actualBet = bet > user.balance ? user.balance : bet;
+
+    user.balance -= actualBet;
     await _dataManager.updateUser(user);
 
-    _game = PokerGame([user.name, "Opponent"], bet, numPlayers: 2);
+    _game = PokerGame([user.name, "Opponent"], actualBet, numPlayers: 2);
+
     _humanPlayer = _game!.players.firstWhere((p) => !p.isAI);
 
     setState(() => _gameOn = true);
@@ -76,6 +83,27 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
       return;
     }
 
+    // If player clicks fold, immediately give pot to opponent
+    if (action == GameAction.fold) {
+      setState(() {
+        player.isFolded = true;
+
+        // Find the other player (opponent)
+        final opponent = _game!.players.firstWhere((p) => p != player);
+
+        // Give the entire pot to the opponent
+        opponent.chips += _game!.pot;
+
+        // Mark game as over
+        _game!.isGameOver = true;
+        _game!.winners = [opponent];
+      });
+
+      _updateBalanceFromGame();
+      return;
+    }
+
+    // Normal game flow for other actions
     setState(() {
       _game!.makeAction(action, raiseAmount: raiseAmount);
     });
@@ -92,9 +120,36 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
 
     if (!mounted || _game == null || _game!.isGameOver) return;
 
+    final aiPlayer = _game!.players.firstWhere((p) => p.isAI);
+
+    if (aiPlayer.isFolded) return;
+
+    double currentPot = _game!.pot;
+
     setState(() {
       _game!.makeAIAction();
     });
+
+    if (aiPlayer.isFolded) {
+      setState(() {
+        _humanPlayer!.chips += currentPot;
+        _game!.isGameOver = true;
+        _game!.winners = [_humanPlayer!];
+      });
+      _updateBalanceFromGame();
+      return;
+    }
+
+    if (aiPlayer.chips <= 0) {
+      setState(() {
+        aiPlayer.chips = 1000;
+        _humanPlayer!.chips += _game!.pot;
+        _game!.isGameOver = true;
+        _game!.winners = [_humanPlayer!];
+      });
+      _updateBalanceFromGame();
+      return;
+    }
 
     if (!_game!.isGameOver &&
         _game!.players[_game!.currentPlayerIndex].isAI &&
@@ -106,381 +161,28 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
   void _updateBalanceFromGame() {
     final user = _dataManager.currentUser;
     if (user != null && _humanPlayer != null) {
-      // Update user balance to match player's chips
       user.balance = _humanPlayer!.chips;
       _dataManager.updateUser(user);
-      print('Balance updated: ${user.balance}');
     }
-  }
-
-  void _showWinnerDialog(List<Player> winners) {
-    // Update balance with winnings
-    _updateBalanceFromGame();
-
-    // Store the pot amount before showing dialog
-    final potAmount = _game!.pot;
-    final user = _dataManager.currentUser;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'GAME OVER',
-          style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.emoji_events, color: Colors.amber, size: 60),
-            const SizedBox(height: 16),
-            Text(
-              'Winner: ${winners.isEmpty ? 'No one' : winners.first.name}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Prize: \$${potAmount.toStringAsFixed(0)}',
-              style: const TextStyle(fontSize: 16, color: Colors.green),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.blue.shade200),
-              ),
-              child: Column(
-                children: [
-                  const Text(
-                    'YOUR NEW BALANCE',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.blue,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '\$${user?.balance.toStringAsFixed(0) ?? '0'}',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Click NEW ROUND button to play again!',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.green,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey.shade700,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                'OK',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   void _startNewRound() {
-    if (!mounted) return;
+    if (!mounted || _game == null || _humanPlayer == null) return;
 
-    final user = _dataManager.currentUser;
-    if (user == null) {
-      setState(() => _gameOn = false);
-      return;
-    }
+    final humanChips = _humanPlayer!.chips;
+    final oppChips = _game!.players[1].chips;
 
-    final currentBet = double.tryParse(_betController.text) ?? 1000;
-
-    // Check if user has enough balance (allow equal)
-    if (currentBet > user.balance) {
-      _showInsufficientBalanceDialog(user.balance);
-      return;
-    }
-
-    // Store current chips before creating new game
-    final currentHumanChips = _humanPlayer?.chips ?? user.balance;
-    final currentOpponentChips = _game?.players[1].chips ?? currentBet;
-
-    // Create new game with fresh deck and cards
-    _game = PokerGame([user.name, "Opponent"], currentBet, numPlayers: 2);
-    _humanPlayer = _game!.players.firstWhere((p) => !p.isAI);
-
-    // Restore the actual chip counts from previous game (including winnings)
-    _humanPlayer!.chips = currentHumanChips;
-    _game!.players[1].chips = currentOpponentChips;
-
-    // Update user balance in data manager
-    user.balance = _humanPlayer!.chips;
-    _dataManager.updateUser(user);
-
-    setState(() {
-      // Keep _gameOn as true (stay in game)
-    });
-
-    print('=== NEW ROUND STARTED ===');
-    print('Human player balance: ${_humanPlayer?.chips}');
-    print('Opponent balance: ${_game!.players[1].chips}');
-    print('Human player cards: ${_humanPlayer?.cards.length}');
-    print('Opponent cards: ${_game!.players[1].cards.length}');
-    print('Game round: ${_game!.currentRound}');
-    print('=======================');
-  }
-
-  void _showInsufficientBalanceDialog(double currentBalance) {
-    final TextEditingController newBetController = TextEditingController();
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.warning_amber_rounded,
-                color: Colors.orange.shade700,
-                size: 28,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'Insufficient Balance',
-              style: TextStyle(
-                color: Colors.black87,
-                fontSize: 18,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.red.shade200),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Current Balance:',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  Text(
-                    '\$${currentBalance.toStringAsFixed(0)}',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.red.shade700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'You don\'t have enough chips to play another round with the current bet amount.',
-              style: TextStyle(fontSize: 14, color: Colors.black87),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Enter new bet amount:',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: newBetController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                prefixText: '\$ ',
-                hintText: 'Enter amount',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.blue.shade700, width: 2),
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    setState(() {
-                      _gameOn = false;
-                      _game = null;
-                      _humanPlayer = null;
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey.shade700,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'LEAVE',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    final newBet = double.tryParse(newBetController.text);
-                    if (newBet == null || newBet <= 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter a valid amount'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
-                    if (newBet > currentBalance) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Amount cannot exceed your balance of \$${currentBalance.toStringAsFixed(0)}',
-                          ),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
-
-                    // Update bet controller with new amount
-                    _betController.text = newBet.toString();
-                    Navigator.pop(context);
-
-                    // Start new round with new bet amount
-                    _startNewRoundWithNewBet(newBet);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade900,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'UPDATE',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+    _game = PokerGame(
+      [_humanPlayer!.name, "Opponent"],
+      humanChips,
+      numPlayers: 2,
     );
-  }
-
-  void _startNewRoundWithNewBet(double newBet) {
-    if (!mounted) return;
-
-    final user = _dataManager.currentUser;
-    if (user == null) {
-      setState(() => _gameOn = false);
-      return;
-    }
-
-    // Store current chips before creating new game
-    final currentHumanChips = _humanPlayer?.chips ?? user.balance;
-    final currentOpponentChips = _game?.players[1].chips ?? newBet;
-
-    // Create new game with fresh deck and cards using new bet amount
-    _game = PokerGame([user.name, "Opponent"], newBet, numPlayers: 2);
     _humanPlayer = _game!.players.firstWhere((p) => !p.isAI);
 
-    // Restore the actual chip counts from previous game (including winnings)
-    _humanPlayer!.chips = currentHumanChips;
-    _game!.players[1].chips = currentOpponentChips;
+    _humanPlayer!.chips = humanChips;
+    _game!.players[1].chips = oppChips;
 
-    // Update user balance in data manager
-    user.balance = _humanPlayer!.chips;
-    _dataManager.updateUser(user);
-
-    setState(() {
-      // Keep _gameOn as true (stay in game)
-    });
-
-    print('=== NEW ROUND STARTED WITH NEW BET: $newBet ===');
-    print('Human player balance: ${_humanPlayer?.chips}');
-    print('Opponent balance: ${_game!.players[1].chips}');
-    print('Game round: ${_game!.currentRound}');
-    print('=======================');
+    setState(() {});
   }
 
   void _showError(String message) {
@@ -641,7 +343,6 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
               ],
             ),
           ),
-
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -768,7 +469,7 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
                     spacing: 12,
                     runSpacing: 12,
                     alignment: WrapAlignment.center,
-                    children: [100, 500, 1000, 5000, 10000].map((val) {
+                    children: [500, 1000, 5000, 10000].map((val) {
                       return GestureDetector(
                         onTap: () {
                           _betController.text = val.toString();
@@ -840,11 +541,9 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
         ? _game!.currentBet - _humanPlayer!.currentBet
         : 0.0;
 
-    // Check if player has any chips
     final bool hasChips =
         _humanPlayer?.chips != null && _humanPlayer!.chips > 0;
 
-    // Check if player can make any legal action
     final bool canMakeAction =
         hasChips &&
         (_humanPlayer!.canCheck(_game!.currentBet) ||
@@ -855,7 +554,6 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
                   _game!.currentBet,
                 )));
 
-    // Only show action panel if it's human turn, game not over, player not folded/all-in, AND player can actually do something
     final bool showActionPanel =
         !_game!.isGameOver &&
         _game!.players[_game!.currentPlayerIndex] == _humanPlayer &&
@@ -863,42 +561,33 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
         !_humanPlayer!.isAllIn &&
         canMakeAction;
 
-    // Get winner/no chips info for display
     String infoMessage = '';
-    Color infoColor = Colors.white;
-    IconData infoIcon = Icons.info;
+    Color infoColor = Colors.grey;
 
     if (_game!.isGameOver) {
       if (_game!.winners.isNotEmpty) {
         final winner = _game!.winners.first;
-        infoMessage = winner == _humanPlayer
-            ? '🎉 YOU WIN! 🎉'
-            : '😢 OPPONENT WINS';
-        infoColor = winner == _humanPlayer ? Colors.amber : Colors.grey;
-        infoIcon = winner == _humanPlayer
-            ? Icons.emoji_events
-            : Icons.sentiment_dissatisfied;
+        infoMessage = winner == _humanPlayer ? 'YOU WIN!' : 'OPPONENT WINS';
+        infoColor = winner == _humanPlayer
+            ? Colors.green[600]!
+            : Colors.red[700]!;
       } else {
         infoMessage = 'GAME OVER';
-        infoColor = Colors.grey;
+        infoColor = Colors.grey[600]!;
       }
     } else if (!hasChips) {
       infoMessage = '⚠️ NO CHIPS LEFT ⚠️';
-      infoColor = Colors.red;
-      infoIcon = Icons.warning_amber_rounded;
+      infoColor = Colors.red[700]!;
     } else if (!canMakeAction && hasChips) {
       infoMessage = '⚠️ CANNOT MAKE ACTION ⚠️';
-      infoColor = Colors.orange;
-      infoIcon = Icons.warning;
+      infoColor = Colors.orange[800]!;
     }
 
-    // Get screen width for responsive sizing
     final screenWidth = MediaQuery.of(context).size.width;
 
     return SafeArea(
       child: Column(
         children: [
-          // Compact Header
           Container(
             padding: const EdgeInsets.symmetric(
               horizontal: 12.0,
@@ -906,11 +595,10 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
             ),
             child: Row(
               children: [
-                // Back button
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(10.0),
+                    borderRadius: BorderRadius.circular(100),
                   ),
                   child: IconButton(
                     padding: EdgeInsets.zero,
@@ -930,8 +618,6 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
                     ),
                   ),
                 ),
-
-                // Game title (smaller on mobile)
                 Expanded(
                   child: Center(
                     child: Text(
@@ -946,13 +632,15 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
                     ),
                   ),
                 ),
-
-                // New Round button when game is over OR player has no chips
-                if (_game!.isGameOver || !hasChips || !canMakeAction)
+                if (_game!.isGameOver ||
+                    !hasChips ||
+                    !canMakeAction ||
+                    _game!.winners.isNotEmpty ||
+                    _game!.winners.isEmpty)
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.green.shade700,
-                      borderRadius: BorderRadius.circular(10.0),
+                      color: Colors.white.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(100),
                     ),
                     child: IconButton(
                       padding: EdgeInsets.zero,
@@ -970,59 +658,34 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
                     ),
                   )
                 else
-                  const SizedBox(width: 36.0), // Match back button width
+                  const SizedBox(width: 36.0),
               ],
             ),
           ),
 
-          // Info Message Banner (game over or no chips)
           if (infoMessage.isNotEmpty)
-            Container(
-              margin: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 4.0,
-              ),
-              padding: const EdgeInsets.symmetric(
-                vertical: 8.0,
-                horizontal: 12.0,
-              ),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    infoColor.withOpacity(0.7),
-                    infoColor.withOpacity(0.9),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(30.0),
-                boxShadow: [
-                  BoxShadow(
-                    color: infoColor.withOpacity(0.3),
-                    blurRadius: 8.0,
-                    spreadRadius: 1.0,
-                  ),
-                ],
-              ),
+            SizedBox(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(infoIcon, color: Colors.white, size: 18.0),
-                  const SizedBox(width: 6.0),
                   Text(
                     infoMessage,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14.0,
+                    style: TextStyle(
+                      color: infoColor,
+                      fontSize: 15.0,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 1.0,
+                      letterSpacing: 0.8,
                     ),
                   ),
+
                   if (_game!.isGameOver) ...[
-                    const SizedBox(width: 6.0),
+                    const SizedBox(width: 8.0),
                     Text(
                       '\$${_game!.pot.toInt()}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14.0,
+                      style: TextStyle(
+                        color: infoColor,
+                        fontSize: 15.0,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -1030,74 +693,39 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
                 ],
               ),
             ),
-
           Expanded(
             child: Stack(
               children: [
-                // Opponent Card (positioned at top)
                 Positioned(
-                  top: 0.0,
-                  left: 16.0,
-                  right: 16.0,
-                  child: _playerCard(
-                    name: 'OPPONENT',
-                    chips: opp.chips,
-                    action: opp.lastAction,
-                    cards: opp.cards,
-                    isOpponent: true,
+                  top: 0,
+                  bottom: 0,
+                  left: 10,
+                  child: SizedBox(
+                    width: 150,
+                    child: Center(
+                      child: _playerCard(
+                        name: 'OPPONENT',
+                        chips: opp.chips,
+                        action: opp.lastAction,
+                        cards: opp.cards,
+                        isOpponent: true,
+                      ),
+                    ),
                   ),
                 ),
-
-                // Center content - Pot and Community Cards
                 Center(
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Pot - smaller on mobile
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20.0,
-                          vertical: 8.0,
-                        ),
-                        decoration: BoxDecoration(
+                      Text(
+                        '\$${_game!.pot.toInt()}',
+                        style: const TextStyle(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(20.0),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.white.withOpacity(0.3),
-                              blurRadius: 10.0,
-                              spreadRadius: 2.0,
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              'POT',
-                              style: TextStyle(
-                                color: Colors.black54,
-                                fontSize: 10.0,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1.0,
-                              ),
-                            ),
-                            const SizedBox(width: 8.0),
-                            Text(
-                              '\$${_game!.pot.toInt()}',
-                              style: const TextStyle(
-                                color: Colors.black87,
-                                fontSize: 18.0,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ],
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
-
-                      const SizedBox(height: 16.0),
-
-                      // Community Cards - compact layout
+                      const SizedBox(height: 10),
                       Container(
                         padding: const EdgeInsets.all(12.0),
                         decoration: BoxDecoration(
@@ -1110,15 +738,6 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
                         ),
                         child: Column(
                           children: [
-                            const Text(
-                              'COMMUNITY',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 9.0,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1.0,
-                              ),
-                            ),
                             const SizedBox(height: 8.0),
                             if (_game!.communityCards.isNotEmpty)
                               Wrap(
@@ -1136,51 +755,38 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
                               )
                             else
                               Container(
-                                width: 80.0,
-                                height: 60.0,
+                                width: 58,
+                                height: 82,
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(6.0),
+                                  borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                    color: Colors.white.withOpacity(0.1),
+                                    color: Colors.white.withOpacity(0.10),
+                                    width: 1,
                                   ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.25),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
                                 ),
-                                child: const Center(
-                                  child: Text(
-                                    'No cards',
-                                    style: TextStyle(
-                                      color: Colors.white30,
-                                      fontSize: 10.0,
-                                    ),
-                                  ),
-                                ),
-                              ),
-
-                            // New Round button in center (always show when game over or no chips)
-                            if (_game!.isGameOver ||
-                                !hasChips ||
-                                !canMakeAction)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 20.0),
-                                child: ElevatedButton.icon(
-                                  onPressed: _startNewRound,
-                                  icon: const Icon(Icons.refresh, size: 16.0),
-                                  label: const Text(
-                                    'START NEW ROUND',
-                                    style: TextStyle(
-                                      fontSize: 14.0,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green.shade700,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 20.0,
-                                      vertical: 12.0,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(30.0),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: BackdropFilter(
+                                    filter: ImageFilter.blur(
+                                      sigmaX: 4,
+                                      sigmaY: 4,
+                                    ), // requires import 'dart:ui'
+                                    child: Container(
+                                      color: Colors.white.withOpacity(0.03),
+                                      child: Center(
+                                        child: Icon(
+                                          Icons.casino_rounded,
+                                          size: 28,
+                                          color: Colors.white.withOpacity(0.22),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -1191,53 +797,111 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
                     ],
                   ),
                 ),
-
-                // You Card (positioned at bottom)
                 Positioned(
-                  bottom: 16.0,
-                  left: 16.0,
-                  right: 16.0,
-                  child: _playerCard(
-                    name: 'YOU',
-                    chips: _humanPlayer?.chips ?? 0.0,
-                    action: _humanPlayer?.lastAction ?? '',
-                    cards: _humanPlayer?.cards ?? [],
-                    isOpponent: false,
-                    callAmount: call,
+                  top: 0,
+                  right: 10,
+                  bottom: 0,
+                  child: SizedBox(
+                    width: 150,
+                    child: Center(
+                      child: _playerCard(
+                        name: 'YOU',
+                        chips: _humanPlayer?.chips ?? 0.0,
+                        action: _humanPlayer?.lastAction ?? '',
+                        cards: _humanPlayer?.cards ?? [],
+                        isOpponent: false,
+                        callAmount: call,
+                      ),
+                    ),
                   ),
                 ),
+
+                if (_game!.isGameOver || !hasChips || !canMakeAction)
+                  Positioned(
+                    bottom: 0, // ← give some breathing room from edge
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(32),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.18),
+                            width: 1.2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.14),
+                              blurRadius: 24,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                          // Optional: real blur (requires import 'dart:ui')
+                          // backdropFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        ),
+                        child: ElevatedButton.icon(
+                          onPressed: _startNewRound,
+                          icon: const Icon(Icons.refresh_rounded, size: 18),
+                          label: const Text(
+                            'PLAY AGAIN',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shadowColor: Colors.transparent,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 0,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(32),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                if (showActionPanel)
+                  Positioned(
+                    bottom: 0,
+                    left: 20,
+                    right: 20,
+                    child: MiniiActionPanel(
+                      key: ValueKey(
+                        'action_panel_${_game!.currentPlayerIndex}_${_game!.currentRound}',
+                      ),
+                      onActionSelected: (action, raiseAmount) {
+                        _makeAction(action, raiseAmount: raiseAmount);
+                      },
+                      currentBet: _game!.currentBet,
+                      playerCurrentBet: _humanPlayer!.currentBet,
+                      isCheckAvailable: _humanPlayer!.canCheck(
+                        _game!.currentBet,
+                      ),
+                      isCallAvailable: _humanPlayer!.canCall(_game!.currentBet),
+                      isRaiseAvailable:
+                          _humanPlayer!.chips > 0 &&
+                          _humanPlayer!.canRaise(
+                            _game!.currentBet + 20.0,
+                            _game!.currentBet,
+                          ),
+                      autoFoldDuration: const Duration(seconds: 15),
+                      onAutoFold: () {
+                        _makeAction(GameAction.fold);
+                      },
+                      playerChips: _humanPlayer!.chips,
+                    ),
+                  ),
               ],
             ),
           ),
-
-          // Action Panel - only when player can actually make an action
-          if (showActionPanel)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: MiniiActionPanel(
-                key: ValueKey(
-                  'action_panel_${_game!.currentPlayerIndex}_${_game!.currentRound}',
-                ),
-                onActionSelected: (action, raiseAmount) {
-                  _makeAction(action, raiseAmount: raiseAmount);
-                },
-                currentBet: _game!.currentBet,
-                playerCurrentBet: _humanPlayer!.currentBet,
-                isCheckAvailable: _humanPlayer!.canCheck(_game!.currentBet),
-                isCallAvailable: _humanPlayer!.canCall(_game!.currentBet),
-                isRaiseAvailable:
-                    _humanPlayer!.chips > 0 &&
-                    _humanPlayer!.canRaise(
-                      _game!.currentBet + 20.0,
-                      _game!.currentBet,
-                    ),
-                autoFoldDuration: const Duration(seconds: 15),
-                onAutoFold: () {
-                  _makeAction(GameAction.fold);
-                },
-                playerChips: _humanPlayer!.chips,
-              ),
-            ),
         ],
       ),
     );
@@ -1251,7 +915,6 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
     required bool isOpponent,
     double callAmount = 0.0,
   }) {
-    // Safely cast cards to List<CardModel>
     final List<CardModel> cardModels = [];
     try {
       for (var card in cards) {
@@ -1263,7 +926,6 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
       print('Error casting cards: $e');
     }
 
-    // Adjust card size based on screen width
     final screenWidth = MediaQuery.of(context).size.width;
     final cardWidth = screenWidth < 360 ? 40.0 : 44.0;
     final cardHeight = screenWidth < 360 ? 58.0 : 64.0;
@@ -1283,6 +945,8 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
             children: [
               Text(
                 name,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: screenWidth < 360 ? 12.0 : 13.0,
@@ -1292,7 +956,6 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
               ),
               Row(
                 children: [
-                  // Chips display
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8.0,
@@ -1313,7 +976,6 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
                   ),
                   if (callAmount > 0) ...[
                     const SizedBox(width: 4.0),
-                    // Call amount display
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 6.0,
@@ -1369,9 +1031,7 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
                 )
               else
                 _buildPlaceholderCard(cardWidth, cardHeight),
-
               if (cardModels.length > 1) const SizedBox(width: 4.0),
-
               if (cardModels.length > 1)
                 Realistplaycard(
                   card: cardModels[1],

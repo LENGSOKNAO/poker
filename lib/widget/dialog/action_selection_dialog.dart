@@ -54,154 +54,365 @@ class _ActionSelectionDialogState extends State<ActionSelectionDialog> {
     final minRaise = _calculateMinRaise();
     final maxRaise = widget.playerChips + widget.playerCurrentBet;
 
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Raise Amount',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.orange[900],
+    return SingleChildScrollView(
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(maxWidth: 400),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1E24),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
               ),
-            ),
-            const SizedBox(height: 20),
-
-            _infoRow('Current bet', widget.currentBet),
-            _infoRow('Your bet', widget.playerCurrentBet),
-            _infoRow(
-              'To call',
-              callAmount,
-              color: callAmount > 0 ? Colors.red[700] : Colors.green[700],
-            ),
-            _infoRow('Your chips', widget.playerChips),
-            const SizedBox(height: 28),
-
-            Text(
-              'Raise to',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[800],
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            TextField(
-              controller: _raiseController,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              autofocus: true,
-              decoration: InputDecoration(
-                prefixText: '\$',
-                prefixStyle: const TextStyle(fontSize: 20),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                filled: true,
-                fillColor: Colors.grey[50],
-                errorText: _errorMessage.isNotEmpty ? _errorMessage : null,
-                errorStyle: const TextStyle(color: Colors.redAccent),
-              ),
-              style: const TextStyle(fontSize: 24),
-              onChanged: (_) {
-                if (_errorMessage.isNotEmpty)
-                  setState(() => _errorMessage = '');
-              },
-            ),
-
-            const SizedBox(height: 12),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Min: $minRaise',
-                  style: TextStyle(color: Colors.orange[800], fontSize: 14),
-                ),
-                Text(
-                  'Max: $maxRaise',
-                  style: TextStyle(color: Colors.green[800], fontSize: 14),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 32),
-
-            SizedBox(
-              width: double.infinity,
-              height: 54,
-              child: ElevatedButton(
-                onPressed: () {
-                  final text = _raiseController.text.trim();
-                  if (text.isEmpty) {
-                    setState(() => _errorMessage = 'Enter an amount');
-                    return;
-                  }
-
-                  final amount = double.tryParse(text);
-                  if (amount == null || amount <= 0) {
-                    setState(() => _errorMessage = 'Invalid amount');
-                    return;
-                  }
-
-                  if (amount < minRaise) {
-                    setState(() {
-                      _errorMessage = 'Minimum is $minRaise';
-                    });
-                    return;
-                  }
-
-                  if (amount > maxRaise) {
-                    setState(() => _errorMessage = 'Not enough chips');
-                    return;
-                  }
-
-                  Navigator.pop(context);
-                  widget.onActionSelected(GameAction.raise, amount);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange[800],
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Colors.white.withOpacity(0.1)),
                   ),
-                  elevation: 2,
                 ),
-                child: const Text(
-                  'CONFIRM RAISE',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                child: Row(
+                  children: [
+                    Text(
+                      'Raise',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[300],
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(
+                        Icons.close,
+                        color: Colors.grey[500],
+                        size: 20,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
+
+              // Stats Grid
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildStatCard(
+                            label: 'Current Bet',
+                            value: widget.currentBet.toStringAsFixed(0),
+                            color: Colors.blue,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildStatCard(
+                            label: 'Your Bet',
+                            value: widget.playerCurrentBet.toStringAsFixed(0),
+                            color: Colors.purple,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildStatCard(
+                            label: 'To Call',
+                            value: callAmount.toStringAsFixed(0),
+                            color: callAmount > 0
+                                ? Colors.orange
+                                : Colors.green,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildStatCard(
+                            label: 'Your Chips',
+                            value: widget.playerChips.toStringAsFixed(0),
+                            color: Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Input Section
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Raise Amount',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[400],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF252A34),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _errorMessage.isNotEmpty
+                              ? Colors.red.withOpacity(0.5)
+                              : Colors.transparent,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            decoration: BoxDecoration(
+                              border: Border(
+                                right: BorderSide(
+                                  color: Colors.white.withOpacity(0.1),
+                                ),
+                              ),
+                            ),
+                            child: Text(
+                              '\$',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: TextField(
+                              controller: _raiseController,
+                              keyboardType: TextInputType.number,
+                              autofocus: true,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 16,
+                                ),
+                              ),
+                              onChanged: (_) {
+                                if (_errorMessage.isNotEmpty) {
+                                  setState(() => _errorMessage = '');
+                                }
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (_errorMessage.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          _errorMessage,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+              // Range Indicator
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: Row(
+                  children: [
+                    _buildRangeBadge(
+                      label: 'MIN',
+                      value: minRaise.toStringAsFixed(0),
+                      color: Colors.orange,
+                    ),
+                    const SizedBox(width: 12),
+                    _buildRangeBadge(
+                      label: 'MAX',
+                      value: maxRaise.toStringAsFixed(0),
+                      color: Colors.green,
+                    ),
+                  ],
+                ),
+              ),
+
+              // Actions
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildButton(
+                        label: 'Cancel',
+                        onPressed: () => Navigator.pop(context),
+                        isPrimary: false,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildButton(
+                        label: 'Confirm',
+                        onPressed: () {
+                          final text = _raiseController.text.trim();
+                          if (text.isEmpty) {
+                            setState(() => _errorMessage = 'Enter amount');
+                            return;
+                          }
+
+                          final amount = double.tryParse(text);
+                          if (amount == null || amount <= 0) {
+                            setState(() => _errorMessage = 'Invalid amount');
+                            return;
+                          }
+
+                          if (amount < minRaise) {
+                            setState(() {
+                              _errorMessage =
+                                  'Minimum: \$${minRaise.toStringAsFixed(0)}';
+                            });
+                            return;
+                          }
+
+                          if (amount > maxRaise) {
+                            setState(
+                              () => _errorMessage = 'Insufficient chips',
+                            );
+                            return;
+                          }
+
+                          Navigator.pop(context);
+                          widget.onActionSelected(GameAction.raise, amount);
+                        },
+                        isPrimary: true,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _infoRow(String label, double value, {Color? color}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildStatCard({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF252A34),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(fontSize: 15, color: Colors.grey[700])),
+          Text(label, style: TextStyle(fontSize: 13, color: Colors.grey[500])),
+          const SizedBox(height: 8),
           Text(
-            value.toStringAsFixed(0),
+            '\$$value',
             style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: color ?? Colors.black87,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: color,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRangeBadge({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+          const SizedBox(width: 4),
+          Text(
+            '\$$value',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildButton({
+    required String label,
+    required VoidCallback onPressed,
+    required bool isPrimary,
+  }) {
+    return Container(
+      height: 48,
+      decoration: BoxDecoration(
+        color: isPrimary ? Colors.blue : Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+        border: isPrimary
+            ? null
+            : Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(10),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: isPrimary ? Colors.white : Colors.grey[400],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
