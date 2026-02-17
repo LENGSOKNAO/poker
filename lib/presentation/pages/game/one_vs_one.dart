@@ -7,6 +7,7 @@ import 'package:game_poker/data/game/poker_game.dart';
 import 'package:game_poker/data/model/card_model.dart';
 import 'package:game_poker/data/model/player.dart';
 import 'package:game_poker/data/services/data_manager.dart';
+import 'package:game_poker/route.dart';
 import 'package:game_poker/widget/cards/realistPlayCard.dart';
 import 'package:game_poker/widget/panenls/minii_action_panel.dart';
 
@@ -28,17 +29,30 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
   @override
   void initState() {
     super.initState();
-    _betController.text = '500';
 
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
+
+    // Get the bet amount passed from the main menu
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args != null && args is String) {
+        _betController.text = args;
+        // Automatically start the game with the received bet
+        _play();
+      } else {
+        _betController.text = '500';
+      }
+    });
   }
 
   @override
   void dispose() {
     _betController.dispose();
+    // Reset orientation back to portrait when leaving the game
+
     super.dispose();
   }
 
@@ -63,14 +77,240 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
 
     final actualBet = bet > user.balance ? user.balance : bet;
 
+    // Directly start the game (no second dialog)
     user.balance -= actualBet;
     await _dataManager.updateUser(user);
 
     _game = PokerGame([user.name, "Opponent"], actualBet, numPlayers: 2);
-
     _humanPlayer = _game!.players.firstWhere((p) => !p.isAI);
 
     setState(() => _gameOn = true);
+  }
+
+  void _showInitialBuyInDialog() {
+    final user = _dataManager.currentUser;
+    if (user == null) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        contentPadding: const EdgeInsets.all(32),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.attach_money_rounded,
+                  color: Colors.blue.shade700,
+                  size: 40,
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'SELECT YOUR BUY-IN',
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Available Balance: \$${user.balance.toStringAsFixed(0)}',
+                style: TextStyle(
+                  color: Colors.black54,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Quick amount buttons
+              Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildAmountButton(500, user),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildAmountButton(1000, user),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildAmountButton(5000, user),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildAmountButton(10000, user),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              // Divider
+              Container(
+                height: 1,
+                color: Colors.grey.shade300,
+              ),
+              const SizedBox(height: 24),
+              // Custom amount input
+              const Text(
+                'OR ENTER CUSTOM AMOUNT',
+                style: TextStyle(
+                  color: Colors.black54,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.blue.shade300, width: 2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    const Text(
+                      '\$',
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: _betController,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          hintText: '500',
+                          hintStyle: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context); // Close dialog
+                      Navigator.pop(context); // Go back to main menu
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey.shade300,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'BACK',
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _play();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade700,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'CONTINUE',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAmountButton(double amount, var user) {
+    final isAffordable = amount <= user.balance;
+    return GestureDetector(
+      onTap: isAffordable
+          ? () {
+              _betController.text = amount.toStringAsFixed(0);
+              setState(() {});
+            }
+          : null,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isAffordable ? Colors.blue.shade100 : Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isAffordable ? Colors.blue.shade300 : Colors.grey.shade400,
+            width: 1.5,
+          ),
+        ),
+        child: Text(
+          '\$${amount.toStringAsFixed(0)}',
+          style: TextStyle(
+            color: isAffordable ? Colors.blue.shade700 : Colors.grey.shade600,
+            fontSize: 14,
+            fontWeight: FontWeight.w900,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
   }
 
   void _makeAction(GameAction action, {double? raiseAmount}) {
@@ -275,263 +515,12 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
               ),
             ),
           ),
-          _gameOn ? _table() : _lobby(),
+          _gameOn ? _table() : _table(),
         ],
       ),
     );
   }
 
-  Widget _lobby() {
-    final user = _dataManager.currentUser;
-
-    return SafeArea(
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 26,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 10,
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.account_balance_wallet,
-                        color: Colors.black87,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        '\$${user?.balance.toStringAsFixed(0) ?? '0'}',
-                        style: const TextStyle(
-                          color: Colors.black87,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                children: [
-                  const SizedBox(height: 60),
-                  Container(
-                    padding: const EdgeInsets.all(25),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.white.withOpacity(0.3),
-                          blurRadius: 40,
-                          spreadRadius: 10,
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.casino,
-                      size: 50,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  const Text(
-                    'TEXAS',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 36,
-                      fontWeight: FontWeight.w300,
-                      letterSpacing: 8,
-                    ),
-                  ),
-                  const Text(
-                    'HOLD\'EM',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 44,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 4,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.white, width: 2),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      'HEAD TO HEAD',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 2,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 50),
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.3),
-                        width: 2,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        const Text(
-                          'ENTER YOUR BET',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 2,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              '\$',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 40,
-                                fontWeight: FontWeight.w300,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: TextField(
-                                controller: _betController,
-                                keyboardType: TextInputType.number,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 50,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  hintText: '0',
-                                  hintStyle: TextStyle(color: Colors.white24),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    alignment: WrapAlignment.center,
-                    children: [500, 1000, 5000, 10000].map((val) {
-                      return GestureDetector(
-                        onTap: () {
-                          _betController.text = val.toString();
-                          setState(() {});
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.4),
-                            ),
-                          ),
-                          child: Text(
-                            '\$${val}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 40),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 60,
-                    child: ElevatedButton(
-                      onPressed: _play,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        elevation: 10,
-                      ),
-                      child: const Text(
-                        'PLAY NOW',
-                        style: TextStyle(
-                          color: Colors.black87,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 2,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _table() {
     if (_game == null) return const SizedBox();
@@ -603,9 +592,11 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
                     minHeight: 36.0,
                   ),
                   onPressed: () => setState(() {
+                    Navigator.pop(context);
                     _gameOn = false;
                     _game = null;
                     _humanPlayer = null;
+
                   }),
                   icon: const Icon(
                     Icons.arrow_back,

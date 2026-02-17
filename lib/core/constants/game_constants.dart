@@ -1,3 +1,5 @@
+import 'package:flutter/cupertino.dart';
+
 class GameConstants {
   static const double smallBlindAmount = 10.0;
   static const double bigBlindAmount = 20.0;
@@ -67,4 +69,10 @@ class GameConstants {
   static const String aiTurnMessage = 'AI Opponent\'s turn...';
   static const String allInMessage = 'ALL PLAYERS ALL-IN!';
   static const String remainingCardsMessage = 'Remaining cards dealt...';
+
+  // Image
+  static const String profileImage = 'https://imgs.search.brave.com/ghpM-ZCsxKPvAejZDv_SuoYRlso27a4zKdtqJf-ZN0o/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly90aHlw/aXguY29tL3dwLWNv/bnRlbnQvdXBsb2Fk/cy8yMDIxLzEwL2Fu/aW1lLWF2YXRhci1w/cm9maWxlLXBpY3R1/cmUtdGh5cGl4LTE4/LTcwMHg3MDAuanBn';
+
 }
+
+

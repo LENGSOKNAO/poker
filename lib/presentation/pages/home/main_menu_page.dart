@@ -1,9 +1,14 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:game_poker/data/model/user.dart';
 import 'package:game_poker/data/services/data_manager.dart';
 import 'package:game_poker/presentation/pages/auth/login_page.dart';
 import 'package:game_poker/route.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+
+import '../../../core/constants/game_constants.dart';
+import '../../../extract_widgets/section_title.dart';
 
 class MainMenuPage extends StatefulWidget {
   const MainMenuPage({super.key});
@@ -60,117 +65,133 @@ class _MainMenuPageState extends State<MainMenuPage>
       home: Scaffold(
         backgroundColor: Colors.transparent,
         extendBodyBehindAppBar: true,
-        appBar: _buildNeonAppBar(user),
+        // appBar: _buildNeonAppBar(user),
         body: Stack(
-          children: [_buildAnimatedBackground(), _buildMainContent(context)],
+          children: [
+            // Background Image
+            Image.asset(
+              'assets/GameBDG.jpeg',
+              fit: BoxFit.fill,
+              width: double.infinity,
+              height: double.infinity,
+            ),
+            // Light Dark Overlay for readability
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              width: double.infinity,
+              height: double.infinity,
+            ),
+            // Main Content
+            _buildMainContent(context),
+          ],
         ),
       ),
     );
   }
 
-  PreferredSizeWidget _buildNeonAppBar(User user) {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      leading: Padding(
-        padding: const EdgeInsets.only(left: 16),
-        child: AnimatedBuilder(
-          animation: _glowController,
-          builder: (context, child) {
-            return Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.teal.withOpacity(
-                      0.3 + _glowController.value * 0.2,
-                    ),
-                    blurRadius: 12 + _glowController.value * 8,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: CircleAvatar(
-                radius: 22,
-                backgroundImage: NetworkImage(
-                  user.profile ??
-                      'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&h=400&fit=crop',
-                ),
-                onBackgroundImageError: (_, __) => const Icon(Icons.person),
-              ),
-            );
-          },
-        ),
-      ),
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            user.name,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade900.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(
-                    color: Colors.green.shade400.withOpacity(0.3),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.monetization_on_rounded,
-                      size: 14,
-                      color: Color(0xFF4CAF50),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '\$${user.balance.toInt()}',
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: Colors.green.shade400,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-      actions: [
-        Container(
-          margin: const EdgeInsets.only(right: 20),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
-          ),
-          child: IconButton(
-            icon: const Icon(
-              Icons.notifications_none_rounded,
-              color: Colors.white,
-              size: 26,
-            ),
-            onPressed: () {},
-          ),
-        ),
-      ],
-    );
-  }
+  // PreferredSizeWidget _buildNeonAppBar(User user) {
+  //   return AppBar(
+  //     backgroundColor: Colors.transparent,
+  //     elevation: 0,
+  //     leading: Padding(
+  //       padding: const EdgeInsets.only(left: 16),
+  //       child: AnimatedBuilder(
+  //         animation: _glowController,
+  //         builder: (context, child) {
+  //           return Container(
+  //             decoration: BoxDecoration(
+  //               shape: BoxShape.circle,
+  //               boxShadow: [
+  //                 BoxShadow(
+  //                   color: Colors.teal.withOpacity(
+  //                     0.3 + _glowController.value * 0.2,
+  //                   ),
+  //                   blurRadius: 12 + _glowController.value * 8,
+  //                   spreadRadius: 2,
+  //                 ),
+  //               ],
+  //             ),
+  //             child: CircleAvatar(
+  //               radius: 22,
+  //               backgroundImage: NetworkImage(
+  //                 user.profile ??
+  //                     'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&h=400&fit=crop',
+  //               ),
+  //               onBackgroundImageError: (_, __) => const Icon(Icons.person),
+  //             ),
+  //           );
+  //         },
+  //       ),
+  //     ),
+  //     title: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Text(
+  //           user.name,
+  //           style: const TextStyle(
+  //             fontSize: 18,
+  //             fontWeight: FontWeight.w700,
+  //             color: Colors.white,
+  //             letterSpacing: 0.5,
+  //           ),
+  //         ),
+  //         const SizedBox(height: 2),
+  //         Row(
+  //           children: [
+  //             Container(
+  //               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+  //               decoration: BoxDecoration(
+  //                 color: Colors.green.shade900.withOpacity(0.3),
+  //                 borderRadius: BorderRadius.circular(4),
+  //                 border: Border.all(
+  //                   color: Colors.green.shade400.withOpacity(0.3),
+  //                 ),
+  //               ),
+  //               child: Row(
+  //                 mainAxisSize: MainAxisSize.min,
+  //                 children: [
+  //                   const Icon(
+  //                     Icons.monetization_on_rounded,
+  //                     size: 14,
+  //                     color: Color(0xFF4CAF50),
+  //                   ),
+  //                   const SizedBox(width: 4),
+  //                   Text(
+  //                     '\$${user.balance.toInt()}',
+  //                     style: TextStyle(
+  //                       fontSize: 15,
+  //                       color: Colors.green.shade400,
+  //                       fontWeight: FontWeight.bold,
+  //                       letterSpacing: 0.5,
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ],
+  //     ),
+  //     actions: [
+  //       Container(
+  //         margin: const EdgeInsets.only(right: 20),
+  //         decoration: BoxDecoration(
+  //           color: Colors.white.withOpacity(0.05),
+  //           borderRadius: BorderRadius.circular(12),
+  //           border: Border.all(color: Colors.white.withOpacity(0.1)),
+  //         ),
+  //         child: IconButton(
+  //           icon: const Icon(
+  //             Icons.notifications_none_rounded,
+  //             color: Colors.white,
+  //             size: 26,
+  //           ),
+  //           onPressed: () {},
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 
   Widget _buildAnimatedBackground() {
     return ShaderMask(
@@ -242,89 +263,277 @@ class _MainMenuPageState extends State<MainMenuPage>
 
   Widget _buildMainContent(BuildContext context) {
     return SafeArea(
-      child: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                const SizedBox(height: 20),
-                _buildGlitchSectionTitle('GAME MODES'),
-                const SizedBox(height: 16),
-                _buildGameCarousel(),
-                const SizedBox(height: 16),
-                _buildGameIndicator(),
-                const SizedBox(height: 32),
-                _buildGlitchSectionTitle('TOURNAMENTS'),
-                const SizedBox(height: 16),
-                _buildTournamentCarousel(),
-                const SizedBox(height: 16),
-                _buildTournamentIndicator(),
-                const SizedBox(height: 32),
-                _buildGlitchSectionTitle('LEADERBOARD'),
-                const SizedBox(height: 16),
-                _buildLeaderboard(),
-              ],
-            ),
-          ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionTitle( title: 'GAME MODES',),
+          const SizedBox(height: 5),
+          _buildGameCarousel(),
+          const SizedBox(height: 5),
+          _buildGameIndicator(),
+          const SizedBox(height: 5),
+          SectionTitle(title: "Profile"),
+          const SizedBox(height: 5),
+          _buildProfile(),
         ],
       ),
     );
   }
+  Widget _buildProfile(){
+    final user = dataManger.currentUser;
+    if (user == null) return const SizedBox.shrink();
 
-  Widget _buildGlitchSectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
         children: [
+          // Main Profile Card
           Container(
-            width: 4,
-            height: 24,
+            height: 100,
             decoration: BoxDecoration(
-              color: Colors.tealAccent,
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.tealAccent.withOpacity(0.2),
+                width: 1,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.tealAccent.withOpacity(0.5),
-                  blurRadius: 8,
-                  spreadRadius: 1,
+                  color: Colors.teal.withOpacity(0.1),
+                  blurRadius: 12,
+                  spreadRadius: 2,
                 ),
               ],
             ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: 3,
-              shadows: [
-                Shadow(color: Colors.teal, blurRadius: 8, offset: Offset(0, 0)),
-              ],
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.white.withOpacity(0.1),
+                        Colors.white.withOpacity(0.05),
+                      ],
+                    ),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    children: [
+                      // Left: Avatar Section
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.tealAccent.withOpacity(0.3),
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.teal.withOpacity(0.2),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: CircleAvatar(
+                          radius: 36,
+                          backgroundColor: Colors.white.withOpacity(0.05),
+                          backgroundImage: NetworkImage(GameConstants.profileImage),
+                          onBackgroundImageError: (_, __) {},
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+
+                      // Middle: User Info and Stats
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // Player Name
+                            Text(
+                              "Daddy",
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+
+                            // Email
+                            Text(
+                              user.email,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.white.withOpacity(0.6),
+                                letterSpacing: 0.2,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 6),
+
+                            // Stats Row - Compact
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildMiniStatCard(
+                                    icon: Icons.monetization_on_rounded,
+                                    value: '\$${user.balance.toStringAsFixed(0)}',
+                                    color: const Color(0xFF4CAF50),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: _buildMiniStatCard(
+                                    icon: Icons.trending_up_rounded,
+                                    value: 'L${user.level}',
+                                    color: Colors.amberAccent,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: _buildMiniStatCard(
+                                    icon: Icons.sports_score_rounded,
+                                    value: '${user.wins}W',
+                                    color: Colors.tealAccent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+
+                      // Right: Edit Button
+                      Container(
+                        height: 84,
+                        width: 60,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.tealAccent.withOpacity(0.7),
+                              Colors.teal.withOpacity(0.5),
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.teal.withOpacity(0.2),
+                              blurRadius: 8,
+                              spreadRadius: 0,
+                            ),
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {
+                              // Navigate to profile details
+                            },
+                            borderRadius: BorderRadius.circular(10),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.person_outline_rounded,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'EDIT',
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    letterSpacing: 0.6,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniStatCard({
+    required IconData icon,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: Colors.white.withOpacity(0.04),
+        border: Border.all(
+          color: color.withOpacity(0.1),
+          width: 0.6,
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            color: color,
+            size: 12,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
 
+
   Widget _buildGameCarousel() {
     return SizedBox(
-      height: 200,
+      height: 150,
+
       child: PageView(
         controller: _gameController,
         onPageChanged: (index) => setState(() => _currentGamePage = index),
         children: [
           _buildGameCard(
             onTap: () {
-              Navigator.pushNamed(context, GameRoute.gameOneVSOne);
+              _showGameBuyInDialog('1v1 SHOWDOWN');
             },
             title: '1v1 SHOWDOWN',
             subtitle: 'HEAD TO HEAD',
             prize: '\$500 PRIZE',
-            players: '2 players',
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -341,7 +550,6 @@ class _MainMenuPageState extends State<MainMenuPage>
             title: '9-MAX TABLE',
             subtitle: 'MULTIPLAYER',
             prize: '\$1,200 PRIZE',
-            players: 'up to 9',
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -350,6 +558,22 @@ class _MainMenuPageState extends State<MainMenuPage>
             icon: Icons.people_rounded,
             imageUrl:
                 'https://imgs.search.brave.com/l6r_d8IkGVvDwPfAnQFslL9HXgGCeoGpp1_rSmSXA9E/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pLnBp/bmltZy5jb20vb3Jp/Z2luYWxzLzg0L2Zl/Lzc3Lzg0ZmU3NzA5/ODg3ZTMyZDIyMmZl/NGMyYWU1MzM2MDky/LmpwZw',
+          ),
+          _buildGameCard(
+            onTap: () {
+              Navigator.pushNamed(context, GameRoute.texas);
+            },
+            title: 'TOURNAMENT',
+            subtitle: 'MULTIPLAYER',
+            prize: '\$1,200 PRIZE',
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF00695C), Color(0xFF003D33)],
+            ),
+            icon: Icons.people_rounded,
+            imageUrl:
+            'https://imgs.search.brave.com/r8EW2i_pDRnm2_187cPacxaDCbswFlPvWsDxUcPj0Os/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pLnBp/bmltZy5jb20vb3Jp/Z2luYWxzLzAyL2Y3/L2Q3LzAyZjdkNzFl/NjlkY2Q2YmY5ZDU4/YjdiMGRiM2Y2ZTUz/LmpwZw',
           ),
         ],
       ),
@@ -360,7 +584,6 @@ class _MainMenuPageState extends State<MainMenuPage>
     required String title,
     required String subtitle,
     required String prize,
-    required String players,
     required LinearGradient gradient,
     required IconData icon,
     required String imageUrl,
@@ -404,39 +627,7 @@ class _MainMenuPageState extends State<MainMenuPage>
                     ),
                   ),
                 ),
-                Positioned(
-                  top: 16,
-                  left: 16,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.6),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: gradient.colors.first.withOpacity(0.5),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(icon, color: Colors.white, size: 16),
-                        const SizedBox(width: 6),
-                        Text(
-                          players,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+
                 Positioned(
                   bottom: 20,
                   left: 20,
@@ -537,17 +728,19 @@ class _MainMenuPageState extends State<MainMenuPage>
   }
 
   Widget _buildGameIndicator() {
-    return SmoothPageIndicator(
-      controller: _gameController,
-      count: 2,
-      effect: ExpandingDotsEffect(
-        expansionFactor: 2.5,
-        spacing: 8,
-        dotHeight: 6,
-        dotWidth: 6,
-        radius: 20,
-        dotColor: Colors.grey.shade800,
-        activeDotColor: Colors.tealAccent,
+    return Center(
+      child: SmoothPageIndicator(
+        controller: _gameController,
+        count: 3,
+        effect: ExpandingDotsEffect(
+          expansionFactor: 2.5,
+          spacing: 8,
+          dotHeight: 6,
+          dotWidth: 6,
+          radius: 20,
+          dotColor: Colors.grey.shade800,
+          activeDotColor: Colors.tealAccent,
+        ),
       ),
     );
   }
@@ -1145,6 +1338,329 @@ class _MainMenuPageState extends State<MainMenuPage>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showGameBuyInDialog(String gameName) {
+    final user = dataManger.currentUser;
+    if (user == null) return;
+
+    String selectedAmount = '500';
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          contentPadding: const EdgeInsets.all(32),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.attach_money_rounded,
+                    color: Colors.blue.shade700,
+                    size: 40,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'SELECT YOUR BUY-IN',
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Available Balance: \$${user.balance.toStringAsFixed(0)}',
+                  style: TextStyle(
+                    color: Colors.black54,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Display selected amount
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.blue.shade200,
+                      width: 2,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Selected Amount',
+                        style: TextStyle(
+                          color: Colors.black54,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '\$${selectedAmount}',
+                        style: TextStyle(
+                          color: Colors.blue.shade700,
+                          fontSize: 36,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Quick amount buttons
+                Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildGameAmountButton(
+                            500,
+                            user,
+                            selectedAmount,
+                            (amount) {
+                              setState(() {
+                                selectedAmount = amount.toStringAsFixed(0);
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildGameAmountButton(
+                            1000,
+                            user,
+                            selectedAmount,
+                            (amount) {
+                              setState(() {
+                                selectedAmount = amount.toStringAsFixed(0);
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildGameAmountButton(
+                            5000,
+                            user,
+                            selectedAmount,
+                            (amount) {
+                              setState(() {
+                                selectedAmount = amount.toStringAsFixed(0);
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildGameAmountButton(
+                            10000,
+                            user,
+                            selectedAmount,
+                            (amount) {
+                              setState(() {
+                                selectedAmount = amount.toStringAsFixed(0);
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                // Divider
+                Container(
+                  height: 1,
+                  color: Colors.grey.shade300,
+                ),
+                const SizedBox(height: 24),
+                // Custom amount input
+                const Text(
+                  'OR ENTER CUSTOM AMOUNT',
+                  style: TextStyle(
+                    color: Colors.black54,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.blue.shade300, width: 2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Text(
+                        '\$',
+                        style: TextStyle(
+                          color: Colors.black87,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          onChanged: (value) {
+                            if (value.isNotEmpty) {
+                              setState(() {
+                                selectedAmount = value;
+                              });
+                            }
+                          },
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(
+                            color: Colors.black87,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                          ),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            hintText: selectedAmount,
+                            hintStyle: const TextStyle(color: Colors.grey),
+                          ),
+                          controller: TextEditingController(text: selectedAmount),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey.shade300,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'CANCEL',
+                        style: TextStyle(
+                          color: Colors.black87,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        // Pass the selected amount to the game
+                        Navigator.pushNamed(
+                          context,
+                          GameRoute.gameOneVSOne,
+                          arguments: selectedAmount,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue.shade700,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'CONTINUE',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGameAmountButton(
+    double amount,
+    User user,
+    String selectedAmount,
+    Function(double) onAmountSelected,
+  ) {
+    final isAffordable = amount <= user.balance;
+    final isSelected = selectedAmount == amount.toStringAsFixed(0);
+
+    return GestureDetector(
+      onTap: isAffordable
+          ? () {
+              onAmountSelected(amount);
+            }
+          : null,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Colors.blue.shade700
+              : (isAffordable ? Colors.blue.shade100 : Colors.grey.shade200),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? Colors.blue.shade900
+                : (isAffordable ? Colors.blue.shade300 : Colors.grey.shade400),
+            width: 1.5,
+          ),
+        ),
+        child: Text(
+          '\$${amount.toStringAsFixed(0)}',
+          style: TextStyle(
+            color: isSelected
+                ? Colors.white
+                : (isAffordable ? Colors.blue.shade700 : Colors.grey.shade600),
+            fontSize: 14,
+            fontWeight: FontWeight.w900,
+          ),
+          textAlign: TextAlign.center,
+        ),
       ),
     );
   }
