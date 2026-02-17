@@ -335,7 +335,9 @@ class _MainMenuPageState extends State<MainMenuPage>
                 'https://imgs.search.brave.com/N3Ik8svV5nK70wGvm8R_42oz9i2_6QO-zE3fLrTNnyw/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudmVjdGVlenku/Y29tL3N5c3RlbS9y/ZXNvdXJjZXMvdGh1/bWJuYWlscy8wNDYv/Mjg4LzM1My9zbWFs/bC9hLWNsb3NlLXVw/LW9mLWEtcGlsZS1v/Zi1wb2tlci1jaGlw/cy1vbi1hLXRhYmxl/LWJhbm5lci1waG90/by5qcGVn',
           ),
           _buildGameCard(
-            onTap: () {},
+            onTap: () {
+              Navigator.pushNamed(context, GameRoute.texas);
+            },
             title: '9-MAX TABLE',
             subtitle: 'MULTIPLAYER',
             prize: '\$1,200 PRIZE',

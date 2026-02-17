@@ -9,6 +9,7 @@ class User {
   double balance;
   int chips;
   int level;
+  int points;
   int wins;
   int gamesPlayed;
 
@@ -23,6 +24,7 @@ class User {
     this.chips = 10000,
     this.level = 1,
     this.wins = 0,
+    this.points = 0,
     this.gamesPlayed = 0,
   });
 

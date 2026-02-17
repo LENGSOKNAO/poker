@@ -585,325 +585,293 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
 
     final screenWidth = MediaQuery.of(context).size.width;
 
-    return SafeArea(
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12.0,
-              vertical: 8.0,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(100),
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+          child: Row(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(100),
+                ),
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 36.0,
+                    minHeight: 36.0,
                   ),
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 36.0,
-                      minHeight: 36.0,
-                    ),
-                    onPressed: () => setState(() {
-                      _gameOn = false;
-                      _game = null;
-                      _humanPlayer = null;
-                    }),
-                    icon: const Icon(
-                      Icons.arrow_back,
+                  onPressed: () => setState(() {
+                    _gameOn = false;
+                    _game = null;
+                    _humanPlayer = null;
+                  }),
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: Colors.white,
+                    size: 20.0,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: Text(
+                    'TEXAS HOLD\'EM',
+                    style: TextStyle(
                       color: Colors.white,
-                      size: 20.0,
+                      fontSize: screenWidth < 360 ? 12.0 : 14.0,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.0,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      'TEXAS HOLD\'EM',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: screenWidth < 360 ? 12.0 : 14.0,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.0,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-                if (_game!.isGameOver ||
-                    !hasChips ||
-                    !canMakeAction ||
-                    _game!.winners.isNotEmpty ||
-                    _game!.winners.isEmpty)
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(100),
-                    ),
-                    child: IconButton(
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 36.0,
-                        minHeight: 36.0,
-                      ),
-                      onPressed: _startNewRound,
-                      icon: const Icon(
-                        Icons.refresh,
-                        color: Colors.white,
-                        size: 20.0,
-                      ),
-                      tooltip: 'New Round',
-                    ),
-                  )
-                else
-                  const SizedBox(width: 36.0),
-              ],
-            ),
+              ),
+            ],
           ),
+        ),
 
-          if (infoMessage.isNotEmpty)
-            SizedBox(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
+        if (infoMessage.isNotEmpty)
+          SizedBox(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  infoMessage,
+                  style: TextStyle(
+                    color: infoColor,
+                    fontSize: 15.0,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+
+                if (_game!.isGameOver) ...[
+                  const SizedBox(width: 8.0),
                   Text(
-                    infoMessage,
+                    '\$${_game!.pot.toInt()}',
                     style: TextStyle(
                       color: infoColor,
                       fontSize: 15.0,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 0.8,
                     ),
                   ),
-
-                  if (_game!.isGameOver) ...[
-                    const SizedBox(width: 8.0),
-                    Text(
-                      '\$${_game!.pot.toInt()}',
-                      style: TextStyle(
-                        color: infoColor,
-                        fontSize: 15.0,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
                 ],
-              ),
+              ],
             ),
-          Expanded(
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 0,
-                  bottom: 0,
-                  left: 10,
-                  child: SizedBox(
-                    width: 150,
-                    child: Center(
-                      child: _playerCard(
-                        name: 'OPPONENT',
-                        chips: opp.chips,
-                        action: opp.lastAction,
-                        cards: opp.cards,
-                        isOpponent: true,
-                      ),
+          ),
+        Expanded(
+          child: Stack(
+            children: [
+              Positioned(
+                top: 0,
+                bottom: 0,
+                left: 10,
+                child: SizedBox(
+                  width: 150,
+                  child: Center(
+                    child: _playerCard(
+                      name: 'OPPONENT',
+                      chips: opp.chips,
+                      action: opp.lastAction,
+                      cards: opp.cards,
+                      isOpponent: true,
                     ),
                   ),
                 ),
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '\$${_game!.pot.toInt()}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
+              ),
+
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '\$${_game!.pot.toInt()}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.all(12.0),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12.0),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.2),
+                          width: 1.5,
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      Container(
-                        padding: const EdgeInsets.all(12.0),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12.0),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.2),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 8.0),
-                            if (_game!.communityCards.isNotEmpty)
-                              Wrap(
-                                spacing: 4.0,
-                                runSpacing: 4.0,
-                                children: _game!.communityCards
-                                    .map(
-                                      (c) => Realistplaycard(
-                                        card: c,
-                                        width: screenWidth < 360 ? 40.0 : 44.0,
-                                        height: screenWidth < 360 ? 58.0 : 64.0,
-                                      ),
-                                    )
-                                    .toList(),
-                              )
-                            else
-                              Container(
-                                width: 58,
-                                height: 82,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.10),
-                                    width: 1,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.25),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 4),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 8.0),
+                          if (_game!.communityCards.isNotEmpty)
+                            Wrap(
+                              spacing: 4.0,
+                              runSpacing: 4.0,
+                              children: _game!.communityCards
+                                  .map(
+                                    (c) => Realistplaycard(
+                                      card: c,
+                                      width: screenWidth < 360 ? 40.0 : 44.0,
+                                      height: screenWidth < 360 ? 58.0 : 64.0,
                                     ),
-                                  ],
+                                  )
+                                  .toList(),
+                            )
+                          else
+                            Container(
+                              width: 58,
+                              height: 82,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.10),
+                                  width: 1,
                                 ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: BackdropFilter(
-                                    filter: ImageFilter.blur(
-                                      sigmaX: 4,
-                                      sigmaY: 4,
-                                    ), // requires import 'dart:ui'
-                                    child: Container(
-                                      color: Colors.white.withOpacity(0.03),
-                                      child: Center(
-                                        child: Icon(
-                                          Icons.casino_rounded,
-                                          size: 28,
-                                          color: Colors.white.withOpacity(0.22),
-                                        ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.25),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(
+                                    sigmaX: 4,
+                                    sigmaY: 4,
+                                  ), // requires import 'dart:ui'
+                                  child: Container(
+                                    color: Colors.white.withOpacity(0.03),
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.casino_rounded,
+                                        size: 28,
+                                        color: Colors.white.withOpacity(0.22),
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  top: 0,
-                  right: 10,
-                  bottom: 0,
-                  child: SizedBox(
-                    width: 150,
-                    child: Center(
-                      child: _playerCard(
-                        name: 'YOU',
-                        chips: _humanPlayer?.chips ?? 0.0,
-                        action: _humanPlayer?.lastAction ?? '',
-                        cards: _humanPlayer?.cards ?? [],
-                        isOpponent: false,
-                        callAmount: call,
+                            ),
+                        ],
                       ),
                     ),
-                  ),
+                  ],
                 ),
+              ),
 
-                if (_game!.isGameOver || !hasChips || !canMakeAction)
-                  Positioned(
-                    bottom: 0, // ← give some breathing room from edge
-                    left: 0,
-                    right: 0,
-                    child: Center(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(32),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.18),
-                            width: 1.2,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.14),
-                              blurRadius: 24,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                          // Optional: real blur (requires import 'dart:ui')
-                          // backdropFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              Positioned(
+                top: 0,
+                right: 10,
+                bottom: 0,
+                child: SizedBox(
+                  width: 150,
+                  child: Center(
+                    child: _playerCard(
+                      name: 'YOU',
+                      chips: _humanPlayer?.chips ?? 0.0,
+                      action: _humanPlayer?.lastAction ?? '',
+                      cards: _humanPlayer?.cards ?? [],
+                      isOpponent: false,
+                      callAmount: call,
+                    ),
+                  ),
+                ),
+              ),
+
+              if (_game!.isGameOver || !hasChips || !canMakeAction)
+                Positioned(
+                  bottom: 20, // ← give some breathing room from edge
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(32),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.18),
+                          width: 1.2,
                         ),
-                        child: ElevatedButton.icon(
-                          onPressed: _startNewRound,
-                          icon: const Icon(Icons.refresh_rounded, size: 18),
-                          label: const Text(
-                            'PLAY AGAIN',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.4,
-                            ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.14),
+                            blurRadius: 24,
+                            offset: const Offset(0, 8),
                           ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shadowColor: Colors.transparent,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 0,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(32),
-                            ),
+                        ],
+                        // Optional: real blur (requires import 'dart:ui')
+                        // backdropFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      ),
+                      child: ElevatedButton.icon(
+                        onPressed: _startNewRound,
+                        icon: const Icon(Icons.refresh_rounded, size: 18),
+                        label: const Text(
+                          'PLAY AGAIN',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shadowColor: Colors.transparent,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 0,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(32),
                           ),
                         ),
                       ),
                     ),
                   ),
-                if (showActionPanel)
-                  Positioned(
-                    bottom: 0,
-                    left: 20,
-                    right: 20,
-                    child: MiniiActionPanel(
-                      key: ValueKey(
-                        'action_panel_${_game!.currentPlayerIndex}_${_game!.currentRound}',
-                      ),
-                      onActionSelected: (action, raiseAmount) {
-                        _makeAction(action, raiseAmount: raiseAmount);
-                      },
-                      currentBet: _game!.currentBet,
-                      playerCurrentBet: _humanPlayer!.currentBet,
-                      isCheckAvailable: _humanPlayer!.canCheck(
-                        _game!.currentBet,
-                      ),
-                      isCallAvailable: _humanPlayer!.canCall(_game!.currentBet),
-                      isRaiseAvailable:
-                          _humanPlayer!.chips > 0 &&
-                          _humanPlayer!.canRaise(
-                            _game!.currentBet + 20.0,
-                            _game!.currentBet,
-                          ),
-                      autoFoldDuration: const Duration(seconds: 15),
-                      onAutoFold: () {
-                        _makeAction(GameAction.fold);
-                      },
-                      playerChips: _humanPlayer!.chips,
+                ),
+              if (showActionPanel)
+                Positioned(
+                  bottom: 0,
+                  left: 20,
+                  right: 20,
+                  child: MiniiActionPanel(
+                    key: ValueKey(
+                      'action_panel_${_game!.currentPlayerIndex}_${_game!.currentRound}',
                     ),
+                    onActionSelected: (action, raiseAmount) {
+                      _makeAction(action, raiseAmount: raiseAmount);
+                    },
+                    currentBet: _game!.currentBet,
+                    playerCurrentBet: _humanPlayer!.currentBet,
+                    isCheckAvailable: _humanPlayer!.canCheck(_game!.currentBet),
+                    isCallAvailable: _humanPlayer!.canCall(_game!.currentBet),
+                    isRaiseAvailable:
+                        _humanPlayer!.chips > 0 &&
+                        _humanPlayer!.canRaise(
+                          _game!.currentBet + 20.0,
+                          _game!.currentBet,
+                        ),
+                    autoFoldDuration: const Duration(seconds: 15),
+                    onAutoFold: () {
+                      _makeAction(GameAction.fold);
+                    },
+                    playerChips: _humanPlayer!.chips,
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -935,7 +903,6 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12.0),
-        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -943,18 +910,21 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                name,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: screenWidth < 360 ? 12.0 : 13.0,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.0,
+              Flexible(
+                child: Text(
+                  name,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: screenWidth < 360 ? 12.0 : 13.0,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.0,
+                  ),
                 ),
               ),
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -999,6 +969,7 @@ class _GameOneVsOneState extends State<GameOneVsOne> {
               ),
             ],
           ),
+
           if (action.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 4.0),

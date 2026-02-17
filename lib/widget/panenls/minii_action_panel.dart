@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:game_poker/core/enums/game.enums.dart';
 import 'package:game_poker/widget/dialog/action_selection_dialog.dart';
@@ -107,54 +108,35 @@ class _MiniiActionPanelState extends State<MiniiActionPanel>
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Container(
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(20),
-        ),
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Timer
-            SizedBox(
-              width: 48,
-              height: 48,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    value:
-                        _secondsRemaining / widget.autoFoldDuration.inSeconds,
-                    strokeWidth: 4,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      _isUrgent
-                          ? const Color(0xFFFF5555)
-                          : const Color(0xFF2DD4BF),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildActionButton(
+                  bigColor:
+                      Colors.blueGrey.shade800, // uniform dark slate for all
+                  smallColor: Colors.blueGrey.shade600,
                   label: 'FOLD',
-                  color: Colors.red.shade900,
+                  color: Colors.blueGrey.shade800,
                   onTap: () => _selectAction(GameAction.fold),
                   enabled: true,
                 ),
                 _buildActionButton(
+                  bigColor: Colors.blueGrey.shade800,
+                  smallColor: Colors.blueGrey.shade600,
                   label: 'CHECK',
-                  color: Colors.grey.shade800,
+                  color: Colors.blueGrey.shade800,
                   onTap: () => _selectAction(GameAction.check),
                   enabled: widget.isCheckAvailable,
                 ),
                 _buildActionButton(
+                  bigColor: Colors.blueGrey.shade800,
+                  smallColor: Colors.blueGrey.shade600,
                   label: 'CALL',
-                  color: Colors.blue.shade900,
+                  color: Colors.blueGrey.shade800,
                   onTap: () => _selectAction(GameAction.call),
                   enabled: widget.isCallAvailable,
                   extra: widget.currentBet > widget.playerCurrentBet
@@ -162,11 +144,14 @@ class _MiniiActionPanelState extends State<MiniiActionPanel>
                       : null,
                 ),
                 _buildActionButton(
+                  bigColor: Colors.blueGrey.shade800,
+                  smallColor: Colors.blueGrey.shade600,
                   label: 'RAISE',
-                  color: Colors.green.shade900,
+                  color: Colors.blueGrey.shade800,
                   onTap: () => _showRaiseDialog(),
                   enabled: widget.isRaiseAvailable,
-                  accent: true,
+                  accent:
+                      true, // optional: keep if Raise needs slight highlight (e.g. border/glow in your widget)
                 ),
               ],
             ),
@@ -183,55 +168,79 @@ class _MiniiActionPanelState extends State<MiniiActionPanel>
     required bool enabled,
     String? extra,
     bool accent = false,
+    required Color smallColor,
+    required Color bigColor,
   }) {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Material(
-          borderRadius: BorderRadius.circular(16),
-          color: enabled ? color : Colors.grey.shade800,
-          child: InkWell(
-            onTap: enabled
-                ? () {
-                    _resetTimer();
-                    onTap();
-                  }
-                : null,
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: accent
-                    ? Border.all(color: Colors.white.withOpacity(0.2), width: 1)
+        child: Stack(
+          children: [
+            // Main button
+            Material(
+              borderRadius: BorderRadius.circular(16),
+              color: enabled ? color : Colors.grey.shade800,
+              child: InkWell(
+                onTap: enabled
+                    ? () {
+                        _resetTimer();
+                        onTap();
+                      }
                     : null,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: accent ? 15 : 14,
-                      fontWeight: FontWeight.w800,
-                      color: enabled ? Colors.white : Colors.white54,
-                      letterSpacing: 0.3,
-                    ),
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    border: accent
+                        ? Border.all(
+                            color: Colors.white.withOpacity(0.2),
+                            width: 1,
+                          )
+                        : null,
                   ),
-                  SizedBox(width: 5),
-                  if (extra != null && enabled)
-                    Text(
-                      '(\$$extra)',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white70,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: accent ? 15 : 14,
+                          fontWeight: FontWeight.w800,
+                          color: enabled ? Colors.white : Colors.white54,
+                          letterSpacing: 0.3,
+                        ),
                       ),
-                    ),
-                ],
+                      const SizedBox(width: 10),
+                      if (extra != null && enabled)
+                        Text(
+                          '(\$$extra)',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white70,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
+            // Progress border
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(
+                  painter: ProgressBorderPainter(
+                    progress:
+                        _secondsRemaining / widget.autoFoldDuration.inSeconds,
+                    color: _isUrgent ? smallColor : bigColor,
+                    strokeWidth: 3,
+                    borderRadius: 16,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -251,5 +260,61 @@ class _MiniiActionPanelState extends State<MiniiActionPanel>
         canRaise: widget.isRaiseAvailable,
       ),
     );
+  }
+}
+
+class ProgressBorderPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+  final double strokeWidth;
+  final double borderRadius;
+
+  ProgressBorderPainter({
+    required this.progress,
+    required this.color,
+    this.strokeWidth = 3,
+    this.borderRadius = 16,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Rect.fromLTWH(
+      strokeWidth / 2,
+      strokeWidth / 2,
+      size.width - strokeWidth,
+      size.height - strokeWidth,
+    );
+
+    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(borderRadius));
+
+    final backgroundPaint = Paint()
+      ..color = Colors.grey.withOpacity(0.2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+
+    canvas.drawRRect(rrect, backgroundPaint);
+
+    // Progress border
+    if (progress > 0) {
+      final paint = Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round;
+
+      final path = Path();
+      path.addRRect(rrect);
+
+      final pathMetrics = path.computeMetrics().first;
+      final progressLength = pathMetrics.length * progress;
+      final extractPath = pathMetrics.extractPath(0, progressLength);
+
+      canvas.drawPath(extractPath, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(ProgressBorderPainter oldDelegate) {
+    return oldDelegate.progress != progress || oldDelegate.color != color;
   }
 }
